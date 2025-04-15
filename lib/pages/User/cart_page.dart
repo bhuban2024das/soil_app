@@ -36,7 +36,7 @@ class _CartPageState extends State<CartPage> {
         return;
       }
 
-      final Uri apiUrl = Uri.parse("${Constants.apiBaseUrl}/products/");
+      final Uri apiUrl = Uri.parse("${Constants.apiBaseUrl}/products");
 
       try {
         final http.Response response = await http.get(
@@ -96,17 +96,7 @@ class _CartPageState extends State<CartPage> {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          // "agentId": 1, // Hardcoded Agent ID
-          // "paymentId": 12345, // Hardcoded Payment ID
-          // "items": items
-
-          "items": [
-            {"productId": 1, "quantity": 20}
-          ],
-          "paymentId": 1256,
-          "agentId": 1
-        }),
+        body: jsonEncode({"items": items, "payment": 2, "agentId": 8}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
