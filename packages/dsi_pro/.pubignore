@@ -1,0 +1,16 @@
+android/local.properties
+example/android
+example/web
+example/ios
+example/windows
+example/build
+example/linux
+example/macos
+example/windows
+example/example.iml
+example/analysis_options.yaml
+example/pubspec.lock
+example/pubspec.yaml
+example/readme.md
+example/test
+example/.*

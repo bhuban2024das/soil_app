@@ -1,0 +1,58 @@
+List<Map<String, String>> commonData = [
+  {
+    "key": "my",
+    "eng": "My",
+    "hin": "मेरे",
+    "tam": "நான்",
+    "mal": "നാമം",
+    "ben": "আমার",
+  },
+  {
+    "key": "account",
+    "eng": "Account",
+    "hin": "खाता",
+    "tam": "கணக்கு",
+    "mal": "അക്കൗണ്ട്",
+    "ben": "হিসাব",
+  },
+  {
+    "key": "name",
+    "eng": "Name",
+    "hin": "नाम",
+    "tam": "பெயர்",
+    "mal": "പേര്",
+    "ben": "নাম",
+  },
+  {
+    "key": "email",
+    "eng": "Email",
+    "hin": "ईमेल",
+    "tam": "மின்னஞ்சல்",
+    "mal": "மின்னஞ்சல்",
+    "ben": "ইমেল",
+  },
+  {
+    "key": "status",
+    "eng": "Status",
+    "hin": "स्थिति",
+    "tam": "நிலை",
+    "mal": "நிலை",
+    "ben": "অবস্থা",
+  },
+  {
+    "key": "address",
+    "eng": "Address",
+    "hin": "पता",
+    "tam": "முகவரி",
+    "mal": "முகவரி",
+    "ben": "ঠিকানা",
+  },
+  {
+    "key": "is",
+    "eng": "Is",
+    "hin": "एक",
+    "tam": "முகவரி",
+    "mal": "முகவரி",
+    "ben": "হয়",
+  }
+];

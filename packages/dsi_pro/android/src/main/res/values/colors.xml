@@ -1,0 +1,10 @@
+<resources>
+    <color name="system_background_dark">#212121</color>
+    <color name="system_error_dark">#F44336</color>
+    <color name="system_error_container_dark">#FFCDD2</color>
+    <color name="system_on_surface_light">#000000</color>
+    <color name="system_primary_light">#3F51B5</color>
+    <color name="system_surface_light">#FFFFFF</color>
+    <color name="system_on_background_dark">#FFFFFF</color>
+    <color name="system_on_error_dark">#FFFFFF</color>
+</resources>

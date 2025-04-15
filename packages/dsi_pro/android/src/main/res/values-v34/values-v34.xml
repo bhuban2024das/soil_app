@@ -1,0 +1,13 @@
+<resources>
+    <color name="system_background_dark">@color/system_background_dark</color>
+    <color name="system_error_dark">@color/system_error_dark</color>
+    <color name="system_error_container_dark">@color/system_error_container_dark</color>
+    <color name="system_on_surface_light">@color/system_on_surface_light</color>
+    <color name="system_primary_light">@color/system_primary_light</color>
+    <color name="system_surface_light">@color/system_surface_light</color>
+    <color name="system_on_background_dark">@color/system_on_background_dark</color>
+    <color name="system_on_error_dark">@color/system_on_error_dark</color>
+    <color name="system_on_error_container_dark">@color/system_on_error_container_dark</color>
+    <color name="system_on_primary_dark">@color/system_on_primary_dark</color>
+    <color name="system_on_primary_container_dark">@color/system_on_primary_container_dark</color>
+</resources>
