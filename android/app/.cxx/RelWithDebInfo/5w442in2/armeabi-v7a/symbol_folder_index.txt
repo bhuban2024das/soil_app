@@ -1,0 +1,1 @@
+C:\my project\soil-test-master\build\app\intermediates\cxx\RelWithDebInfo\5w442in2\obj\armeabi-v7a

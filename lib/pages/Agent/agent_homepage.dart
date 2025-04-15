@@ -7,7 +7,7 @@ import 'package:original/pages/Agent/agent_order.dart';
 import 'package:original/pages/Agent/agent_profilepage.dart';
 import 'package:original/pages/Agent/agent_test_report.dart';
 import 'package:original/pages/Agent/my_earning.dart';
-import 'package:original/pages/Agent/product_inventory.dart';
+// import 'package:original/pages/Agent/product_inventory.dart';
 import 'package:original/pages/Agent/test_list.dart';
 import 'package:original/pages/Agent/test_request.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,6 +15,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:original/utils/config.dart';
 import 'package:original/pages/Agent/soil_request_list.dart';
+import 'package:original/pages/Agent/Product&Inventory/productList_screen.dart';
+import 'package:original/pages/Agent/Agent_oders_section/agentOrder_screen.dart';
 
 class AgentHomepage extends StatefulWidget {
   const AgentHomepage({super.key});
@@ -139,18 +141,24 @@ class _HomePageState extends State<AgentHomepage> {
                       leading: Icon(Icons.shopping_bag),
                       title: Text("Product & Inventory"),
                       onTap: () {
-                        // setState(() {
-                        //   currentPageIndex = 2;
-                        //   goBack(context);
-                        // });
-                        go(context, ProductInventory());
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ProductListScreen()),
+                        );
                       },
                     ),
-                    // ListTile(
-                    //   leading: Icon(Icons.ads_click_sharp),
-                    //   title: Text("My Order History"),
-                    //   onTap: () {},
-                    // ),
+                    ListTile(
+                      leading: Icon(Icons.radar_sharp),
+                      title: Text("Orders Section"),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => OrdersScreen()),
+                        );
+                      },
+                    ),
                     ListTile(
                       leading: Icon(Icons.settings),
                       title: Text("My Earning"),

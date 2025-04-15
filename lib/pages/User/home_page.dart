@@ -1,5 +1,5 @@
 import 'package:dsi_pro/dsi_pro.dart';
-import 'package:original/pages/User/AddSoliTestRequest.dart';
+// import 'package:original/pages/User/AddSoliTestRequest.dart';
 import 'package:original/pages/User/SoilTestRequests.dart';
 import 'package:original/pages/User/cart_page.dart';
 import 'package:original/pages/User/explore_page.dart';
@@ -12,7 +12,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../utils/config.dart';
-import 'package:original/pages/User/User_testReport/Soil_testListScreen.dart';
+// import 'package:original/pages/User/User_testReport/Soil_testListScreen.dart';
+import 'package:original/pages/User/user_report/soliTestReportsList_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -155,7 +156,11 @@ class _HomePageState extends State<HomePage> {
                       leading: Icon(Icons.receipt_long_outlined),
                       title: Text("My Reports "),
                       onTap: () {
-                        go(context, SoilTestListScreen());
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => UserReportsScreen()),
+                        );
                       },
                     ),
                     ListTile(

@@ -21,8 +21,11 @@ class SoilTestRequest {
   final int agentId; // Non-nullable field (int)
   final String agentName; // Non-nullable field (String)
   final String agentMobileNumber; // Non-nullable field (String)
-  final String? recommendedCrops; // Nullable field (String?)
-  final String? recommendedProducts; // Nullable field (String?)
+  // final String? recommendedCrops; // Nullable field (String?)
+  // final String? recommendedProducts; // Nullable field (String?)
+  final List<dynamic>? recommendedCrops;
+  final List<dynamic>? recommendedProducts;
+
   final String? soilPreparations; // Nullable field (String?)
 
   SoilTestRequest({
@@ -53,18 +56,32 @@ class SoilTestRequest {
       soilType: json['soilType'], // Nullable field
       status: json['status'] ?? 'Unknown', // Default value for null
       testDate: json['testDate'] ?? 'Unknown', // Default value for null
+      // phLevel: json['phLevel'] != null
+      //     ? (json['phLevel'] as num).toDouble()
+      //     : null, // Convert if not null
+      // nitrogen: json['nitrogen'] != null
+      //     ? (json['nitrogen'] as num).toDouble()
+      //     : null, // Convert if not null
+      // phosphorus: json['phosphorus'] != null
+      //     ? (json['phosphorus'] as num).toDouble()
+      //     : null, // Convert if not null
+      // potassium: json['potassium'] != null
+      //     ? (json['potassium'] as num).toDouble()
+      //     : null, // Convert if not null
+
       phLevel: json['phLevel'] != null
-          ? (json['phLevel'] as num).toDouble()
-          : null, // Convert if not null
+          ? double.tryParse(json['phLevel'].toString())
+          : null,
       nitrogen: json['nitrogen'] != null
-          ? (json['nitrogen'] as num).toDouble()
-          : null, // Convert if not null
+          ? double.tryParse(json['nitrogen'].toString())
+          : null,
       phosphorus: json['phosphorus'] != null
-          ? (json['phosphorus'] as num).toDouble()
-          : null, // Convert if not null
+          ? double.tryParse(json['phosphorus'].toString())
+          : null,
       potassium: json['potassium'] != null
-          ? (json['potassium'] as num).toDouble()
-          : null, // Convert if not null
+          ? double.tryParse(json['potassium'].toString())
+          : null,
+
       userId: json['userId'],
       userName: json['userName'] ?? 'Unknown', // Default value for null
       userMobileNumber:

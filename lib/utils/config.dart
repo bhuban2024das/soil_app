@@ -9,7 +9,7 @@ class Constants {
   // static var primaryColor = const Color(256);
   static var blackColor = Colors.black54;
 
-  // base url
+  // base url  Constants.apiBaseUrl
   static const String apiBaseUrl = "http://35.244.11.78:9101/api";
 
   //Onboarding texts
