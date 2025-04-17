@@ -31,7 +31,7 @@ class _SignUpState extends State<SignUp> {
   @override
   void initState() {
     super.initState();
-    fetchAgents();
+    // fetchAgents();
     getCurrentLocation();
   }
 
@@ -96,10 +96,12 @@ class _SignUpState extends State<SignUp> {
     final number = _numberController.text.trim();
     final location = _locationController.text.trim();
 
-    if (name.isEmpty ||
-        number.isEmpty ||
-        location.isEmpty ||
-        selectedAgentId == null) {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('userToken', '');
+
+    if (name.isEmpty || number.isEmpty || location.isEmpty
+        // ||selectedAgentId == null
+        ) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please enter all details")),
       );
@@ -137,8 +139,8 @@ class _SignUpState extends State<SignUp> {
       });
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setInt("agentId", selectedAgentId!);
+        // SharedPreferences prefs = await SharedPreferences.getInstance();
+        // await prefs.setInt("agentId", selectedAgentId!);
 
         Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => Otp(phoneNumber: _numberController.text)));
@@ -204,25 +206,25 @@ class _SignUpState extends State<SignUp> {
                       icon: Icons.location_on,
                     ),
                     const SizedBox(height: 22),
-                    DropdownButtonFormField<int>(
-                      decoration: const InputDecoration(
-                        labelText: 'Select Agent',
-                        prefixIcon: Icon(Icons.group),
-                        border: OutlineInputBorder(),
-                      ),
-                      value: selectedAgentId,
-                      items: agentList
-                          .map((agent) => DropdownMenuItem<int>(
-                                value: agent["userId"],
-                                child: Text(agent["name"]),
-                              ))
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedAgentId = value!;
-                        });
-                      },
-                    ),
+                    // DropdownButtonFormField<int>(
+                    //   decoration: const InputDecoration(
+                    //     labelText: 'Select Agent',
+                    //     prefixIcon: Icon(Icons.group),
+                    //     border: OutlineInputBorder(),
+                    //   ),
+                    //   value: selectedAgentId,
+                    //   items: agentList
+                    //       .map((agent) => DropdownMenuItem<int>(
+                    //             value: agent["userId"],
+                    //             child: Text(agent["name"]),
+                    //           ))
+                    //       .toList(),
+                    //   onChanged: (value) {
+                    //     setState(() {
+                    //       selectedAgentId = value!;
+                    //     });
+                    //   },
+                    // ),
                     const SizedBox(height: 22),
                     SizedBox(
                       width: double.infinity,

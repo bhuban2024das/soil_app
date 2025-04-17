@@ -23,6 +23,7 @@ class _OtpState extends State<Otp> {
 
   bool _isVerifying = false;
   bool _isResending = false;
+  List<dynamic> agentList = [];
 
   Future<void> verifyOtp() async {
     final otp = _otpControllers.map((controller) => controller.text).join();
@@ -44,6 +45,7 @@ class _OtpState extends State<Otp> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
         // print("Decoded JSON data: ${jsonEncode(data)}");
 
         final accessToken = data['accessToken'] ?? '';
@@ -65,6 +67,7 @@ class _OtpState extends State<Otp> {
         await prefs.setString('userMobile', widget.phoneNumber);
         await prefs.setString('userName', name);
         await prefs.setString('userId', uId);
+        await fetchAgents();
 
         Navigator.pushReplacement(
           context,
@@ -83,6 +86,36 @@ class _OtpState extends State<Otp> {
     }
 
     setState(() => _isVerifying = false);
+  }
+
+  Future<void> fetchAgents() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('userToken');
+
+      final response = await http.get(
+        Uri.parse("${Constants.apiBaseUrl}/admin/agents"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token"
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> agents = jsonDecode(response.body);
+        final List<dynamic> filteredAgents = agents
+            .where(
+                (agent) => agent["role"] == "AGENT" && agent["active"] == true)
+            .toList();
+        setState(() {
+          agentList = filteredAgents;
+        });
+      } else {
+        print("Failed to load agents");
+      }
+    } catch (e) {
+      print("Error fetching agents: $e");
+    }
   }
 
   Future<void> resendOtp() async {

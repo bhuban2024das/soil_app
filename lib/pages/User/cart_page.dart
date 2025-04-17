@@ -70,16 +70,15 @@ class _CartPageState extends State<CartPage> {
     });
   }
 
-  Future<void> placeOrder(List<Product> selectedItems) async {
+  Future<String?> placeOrder(List<Product> selectedItems) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final String token = prefs.getString('userToken') ?? '';
-    // final String agentId = prefs.getString('agentId') ?? '';
 
     if (token.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("User not logged in.")),
       );
-      return;
+      return null;
     }
 
     final Uri orderUrl = Uri.parse("${Constants.apiBaseUrl}/orders/");
@@ -102,15 +101,22 @@ class _CartPageState extends State<CartPage> {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Order placed successfully!")),
-        );
+        final data = json.decode(response.body);
+        final orderResponse = data['cashfreeOrderResponse'];
 
-        setState(() {
-          for (var item in selectedItems) {
-            item.itemq = 0;
-          }
-        });
+        if (orderResponse != null &&
+            orderResponse['payment_session_id'] != null) {
+          final sessionId = orderResponse['payment_session_id'];
+
+          // Optional: Reset item quantity after successful order
+          setState(() {
+            for (var item in selectedItems) {
+              item.itemq = 0;
+            }
+          });
+
+          return sessionId;
+        }
       } else {
         print("Failed: ${response.body}");
         ScaffoldMessenger.of(context).showSnackBar(
@@ -123,6 +129,7 @@ class _CartPageState extends State<CartPage> {
         const SnackBar(content: Text("Something went wrong.")),
       );
     }
+    return null;
   }
 
   @override
@@ -166,15 +173,27 @@ class _CartPageState extends State<CartPage> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
                         final selectedItems =
                             cartItems.where((item) => item.itemq > 0).toList();
-                        if (selectedItems.isNotEmpty) {
+
+                        if (selectedItems.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("No items selected.")),
+                          );
+                          return;
+                        }
+
+                        final sessionId = await placeOrder(selectedItems);
+
+                        if (sessionId != null) {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) =>
-                                    PaymentPage(amount: total)),
+                              builder: (context) => PaymentPage(
+                                amount: total,
+                              ),
+                            ),
                           );
                         }
                       },
