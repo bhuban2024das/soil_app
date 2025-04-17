@@ -60,9 +60,11 @@ class _AgentInState extends State<AgentIn> {
       }
     } catch (e) {
       print('Error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Something went wrong. Please try again.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Something went wrong. Please try again.')),
+        );
+      }
     }
   }
 

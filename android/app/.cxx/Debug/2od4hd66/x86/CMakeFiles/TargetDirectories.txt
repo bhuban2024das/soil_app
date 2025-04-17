@@ -1,0 +1,2 @@
+C:/my project/soil-test-master/android/app/.cxx/Debug/2od4hd66/x86/CMakeFiles/edit_cache.dir
+C:/my project/soil-test-master/android/app/.cxx/Debug/2od4hd66/x86/CMakeFiles/rebuild_cache.dir

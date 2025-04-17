@@ -1,13 +1,16 @@
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:http_parser/http_parser.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
-import 'package:original/pages/Agent/Product&Inventory/ProductModel.dart'; // Replace with the actual path to your Product model
-import 'package:original/utils/config.dart'; // Replace with your constants file path
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'package:original/utils/config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:original/utils/config.dart';
+
+import 'package:original/pages/Agent/Product&Inventory/category.dart';
+import 'package:original/pages/Agent/Product&Inventory/ProductModel.dart';
 
 class AddProductScreen extends StatefulWidget {
   @override
@@ -16,244 +19,194 @@ class AddProductScreen extends StatefulWidget {
 
 class _AddProductScreenState extends State<AddProductScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
-  late TextEditingController _stockController;
-  late TextEditingController _priceController;
-  late TextEditingController _descriptionController;
-  late TextEditingController _categoryController;
+  final _picker = ImagePicker();
 
-  int newProductId = 0;
-  XFile? _image; // To hold the image file
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _stockController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+
+  File? _imageFile;
+  double? _latitude;
+  double? _longitude;
+
+  List<Category> _categories = [];
+  Category? _selectedCategory;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController();
-    _stockController = TextEditingController();
-    _priceController = TextEditingController();
-    _descriptionController = TextEditingController();
-    _categoryController = TextEditingController();
-    _fetchLastProductId();
+    _getCurrentLocation();
+    _fetchCategories();
   }
 
-  Future<void> _fetchLastProductId() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+  Future<void> _getCurrentLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+      });
+    } catch (e) {
+      print('Error getting location: $e');
+    }
+  }
+
+  Future<void> _fetchCategories() async {
+    final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('userToken') ?? '';
 
-    try {
-      final response = await http.get(
-        Uri.parse("${Constants.apiBaseUrl}/products"),
-        headers: {'Authorization': 'Bearer $token'},
-      );
+    final response = await http.get(
+      Uri.parse('${Constants.apiBaseUrl}/category'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(response.body);
-        if (jsonList.isNotEmpty) {
-          final lastProduct = Product.fromJson(jsonList.last);
-          setState(() {
-            newProductId = lastProduct.id +
-                1; // Set new product ID to the last product ID + 1
-          });
-        } else {
-          setState(() {
-            newProductId = 1; // Start from 1 if no products are available
-          });
-        }
-      } else {
-        throw Exception("Failed to load products");
-      }
-    } catch (e) {
-      print("Error: $e");
+    if (response.statusCode == 200) {
+      final List<dynamic> categoryList = json.decode(response.body);
+      setState(() {
+        _categories = categoryList
+            .map((categoryJson) => Category.fromJson(categoryJson))
+            .toList();
+      });
+    } else {
+      print('Failed to load categories');
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
     }
   }
 
   Future<void> _addProduct() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (!_formKey.currentState!.validate() || _selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Please complete all fields")),
+      );
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('userToken') ?? '';
 
-    // Create a new product object
-    final newProduct = Product(
-      id: newProductId,
+    // Construct Product with nested Category
+    final product = Product(
+      id: 0,
       name: _nameController.text,
-      stock: int.parse(_stockController.text),
       price: double.parse(_priceController.text),
+      stock: int.parse(_stockController.text),
       description: _descriptionController.text,
-      category: _categoryController.text,
+      category: _selectedCategory!,
+      image: null,
     );
 
-    // Prepare the multipart request
-    var request = http.MultipartRequest(
+    // final productJson = jsonEncode(product.toJson());
+
+    final request = http.MultipartRequest(
       'POST',
-      Uri.parse("${Constants.apiBaseUrl}/products/"),
+      Uri.parse('${Constants.apiBaseUrl}/products/'),
     );
 
-    request.headers.addAll({
-      'Authorization': 'Bearer $token',
-    });
+    request.headers['Authorization'] = 'Bearer $token';
 
-    // Add fields
-    request.fields['id'] = newProduct.id.toString();
-    request.fields['name'] = newProduct.name;
-    request.fields['stock'] = newProduct.stock.toString();
-    request.fields['price'] = newProduct.price.toString();
-    request.fields['description'] = newProduct.description;
-    request.fields['category'] = newProduct.category;
+    request.fields['name'] = _nameController.text;
+    request.fields['price'] = _priceController.text;
+    request.fields['stock'] = _stockController.text;
+    request.fields['description'] = _descriptionController.text;
+    request.fields['categoryId'] = _selectedCategory!.categoryId
+        .toString(); // Make sure this matches backend param name
 
-    // If an image is selected, add it to the multipart form data
-    if (_image != null) {
-      var pic = await http.MultipartFile.fromPath(
+    request.fields['latitude'] = _latitude?.toString() ?? '';
+    request.fields['longitude'] = _longitude?.toString() ?? '';
+
+    if (_imageFile != null) {
+      request.files.add(await http.MultipartFile.fromPath(
         'image',
-        _image!.path,
-        contentType:
-            MediaType('image', 'jpeg'), // or 'png', depending on your file type
-      );
-      request.files.add(pic);
+        _imageFile!.path,
+      ));
     }
 
-    try {
-      final response = await request.send();
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
 
-      if (response.statusCode == 201) {
-        // Wait for the server response
-        response.stream.transform(utf8.decoder).listen((value) {
-          // The value will be the server's response in JSON format
-          _showSuccessDialog(); // Go back with the new product
-        });
-      } else {
-        print("Failed to add product: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("Error adding product: $e");
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      print('Product added successfully');
+      Navigator.pop(context);
+    } else {
+      print('Failed to add product: ${response.statusCode}');
+      print('Response: $responseBody');
     }
-  }
-
-  // Show success dialog
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Success"),
-          content: Text("Product has been successfully added."),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                Navigator.pop(
-                    context, true); // Optionally, pop the screen if needed
-              },
-              child: Text("OK"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Pick an image from gallery or camera
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    setState(() {
-      _image = pickedFile;
-    });
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _stockController.dispose();
-    _priceController.dispose();
-    _descriptionController.dispose();
-    _categoryController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Add New Product')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      appBar: AppBar(title: Text('Add Product')),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (_imageFile != null)
+                Image.file(_imageFile!,
+                    height: 200, width: double.infinity, fit: BoxFit.cover),
+              TextButton.icon(
+                icon: Icon(Icons.image),
+                label: Text('Pick Image'),
+                onPressed: _pickImage,
+              ),
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(labelText: 'Product Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter product name';
-                  }
-                  return null;
-                },
+                validator: (value) =>
+                    value!.isEmpty ? 'Enter product name' : null,
               ),
               TextFormField(
                 controller: _stockController,
                 decoration: InputDecoration(labelText: 'Stock'),
                 keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter stock quantity';
-                  }
-                  return null;
-                },
+                validator: (value) =>
+                    value!.isEmpty ? 'Enter stock quantity' : null,
               ),
               TextFormField(
                 controller: _priceController,
                 decoration: InputDecoration(labelText: 'Price'),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter price';
-                  }
-                  return null;
-                },
+                keyboardType: TextInputType.number,
+                validator: (value) => value!.isEmpty ? 'Enter price' : null,
               ),
               TextFormField(
                 controller: _descriptionController,
                 decoration: InputDecoration(labelText: 'Description'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a description';
-                  }
-                  return null;
-                },
+                maxLines: 3,
+                validator: (value) =>
+                    value!.isEmpty ? 'Enter description' : null,
               ),
-              TextFormField(
-                controller: _categoryController,
+              DropdownButtonFormField<Category>(
+                value: _selectedCategory,
                 decoration: InputDecoration(labelText: 'Category'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a category';
-                  }
-                  return null;
+                items: _categories.map((cat) {
+                  return DropdownMenuItem<Category>(
+                    value: cat,
+                    child: Text(cat.name),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedCategory = val;
+                  });
                 },
-              ),
-              SizedBox(height: 20),
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 15),
-                  color: Colors.grey[200],
-                  child: Center(
-                    child: Text(
-                      _image == null ? 'Pick an Image' : 'Change Image',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
+                validator: (value) =>
+                    value == null ? 'Please select a category' : null,
               ),
               SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState?.validate() ?? false) {
-                    _addProduct();
-                  }
-                },
+                onPressed: _addProduct,
                 child: Text('Add Product'),
               ),
             ],

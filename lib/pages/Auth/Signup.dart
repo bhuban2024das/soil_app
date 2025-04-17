@@ -5,6 +5,9 @@ import 'package:page_transition/page_transition.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
+
 import '../../utils/config.dart';
 import '../../widgets/CustomTextField.dart';
 import 'LoginScreen.dart';
@@ -22,15 +25,91 @@ class _SignUpState extends State<SignUp> {
   final TextEditingController _locationController = TextEditingController();
 
   bool isLoading = false;
+  List<dynamic> agentList = [];
+  int? selectedAgentId;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchAgents();
+    getCurrentLocation();
+  }
+
+  Future<void> fetchAgents() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('userToken');
+
+      final response = await http.get(
+        Uri.parse("${Constants.apiBaseUrl}/admin/agents"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token"
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> agents = jsonDecode(response.body);
+        final List<dynamic> filteredAgents = agents
+            .where(
+                (agent) => agent["role"] == "AGENT" && agent["active"] == true)
+            .toList();
+        setState(() {
+          agentList = filteredAgents;
+        });
+      } else {
+        print("Failed to load agents");
+      }
+    } catch (e) {
+      print("Error fetching agents: $e");
+    }
+  }
+
+  Future<void> getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.denied) return;
+    }
+
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+    setState(() {
+      _locationController.text = '${position.latitude}, ${position.longitude}';
+    });
+  }
+
+  bool isValidPhoneNumber(String number) {
+    final regex = RegExp(r'^[0-9]{10}$');
+    return regex.hasMatch(number);
+  }
 
   Future<void> registerUser() async {
     final name = _nameController.text.trim();
     final number = _numberController.text.trim();
     final location = _locationController.text.trim();
 
-    if (name.isEmpty || number.isEmpty) {
+    if (name.isEmpty ||
+        number.isEmpty ||
+        location.isEmpty ||
+        selectedAgentId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please enter all details")),
+        const SnackBar(content: Text("Please enter all details")),
+      );
+      return;
+    }
+
+    if (!isValidPhoneNumber(number)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Please enter a valid 10-digit phone number")),
       );
       return;
     }
@@ -47,6 +126,9 @@ class _SignUpState extends State<SignUp> {
           "name": name,
           "mobileNumber": number,
           "location": location,
+          "role": "USER",
+          "active": 1,
+          "agentId": selectedAgentId
         }),
       );
 
@@ -55,6 +137,9 @@ class _SignUpState extends State<SignUp> {
       });
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setInt("agentId", selectedAgentId!);
+
         Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => Otp(phoneNumber: _numberController.text)));
       } else {
@@ -68,7 +153,7 @@ class _SignUpState extends State<SignUp> {
         isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Something went wrong")),
+        const SnackBar(content: Text("Something went wrong")),
       );
     }
   }
@@ -112,12 +197,31 @@ class _SignUpState extends State<SignUp> {
                       hintText: 'Enter Number',
                       icon: Icons.call,
                     ),
-                    const SizedBox(height: 22),
                     CustomTextfield(
                       controller: _locationController,
                       obscureText: false,
                       hintText: 'Enter location',
-                      icon: Icons.call,
+                      icon: Icons.location_on,
+                    ),
+                    const SizedBox(height: 22),
+                    DropdownButtonFormField<int>(
+                      decoration: const InputDecoration(
+                        labelText: 'Select Agent',
+                        prefixIcon: Icon(Icons.group),
+                        border: OutlineInputBorder(),
+                      ),
+                      value: selectedAgentId,
+                      items: agentList
+                          .map((agent) => DropdownMenuItem<int>(
+                                value: agent["userId"],
+                                child: Text(agent["name"]),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedAgentId = value!;
+                        });
+                      },
                     ),
                     const SizedBox(height: 22),
                     SizedBox(
@@ -142,10 +246,8 @@ class _SignUpState extends State<SignUp> {
                           child: isLoading
                               ? const CircularProgressIndicator(
                                   color: Colors.white)
-                              : const Text(
-                                  'Send Code',
-                                  style: TextStyle(fontSize: 16),
-                                ),
+                              : const Text('Send Code',
+                                  style: TextStyle(fontSize: 16)),
                         ),
                       ),
                     )
@@ -168,15 +270,11 @@ class _SignUpState extends State<SignUp> {
                     TextSpan(children: [
                       TextSpan(
                         text: 'Have an Account? ',
-                        style: TextStyle(
-                          color: Constants.blackColor,
-                        ),
+                        style: TextStyle(color: Constants.blackColor),
                       ),
                       TextSpan(
                         text: 'Login',
-                        style: TextStyle(
-                          color: Constants.primaryColor,
-                        ),
+                        style: TextStyle(color: Constants.primaryColor),
                       ),
                     ]),
                   ),
@@ -191,69 +289,79 @@ class _SignUpState extends State<SignUp> {
 }
 
 
-// import 'dart:convert';
+
 // import 'package:flutter/material.dart';
-// import 'package:http/http.dart' as http;
 // import 'package:original/pages/Auth/UserLogin.dart';
 // import 'package:original/pages/Auth/Verify.dart';
 // import 'package:page_transition/page_transition.dart';
+// import 'package:http/http.dart' as http;
+// import 'dart:convert';
 
 // import '../../utils/config.dart';
 // import '../../widgets/CustomTextField.dart';
 // import 'LoginScreen.dart';
 
 // class SignUp extends StatefulWidget {
-//   const SignUp({Key? key}) : super(key: key);
+//   const SignUp({super.key});
 
 //   @override
 //   State<SignUp> createState() => _SignUpState();
 // }
 
 // class _SignUpState extends State<SignUp> {
-//   final TextEditingController _fullNameController = TextEditingController();
-//   final TextEditingController _phoneController = TextEditingController();
-//   bool _isLoading = false;
+//   final TextEditingController _nameController = TextEditingController();
+//   final TextEditingController _numberController = TextEditingController();
+//   final TextEditingController _locationController = TextEditingController();
 
-//   Future<void> _signUp() async {
-//     final String fullName = _fullNameController.text.trim();
-//     final String phone = _phoneController.text.trim();
+//   bool isLoading = false;
 
-//     if (fullName.isEmpty || phone.isEmpty) {
+//   Future<void> registerUser() async {
+//     final name = _nameController.text.trim();
+//     final number = _numberController.text.trim();
+//     final location = _locationController.text.trim();
+
+//     if (name.isEmpty || number.isEmpty) {
 //       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('Please fill all fields')),
+//         SnackBar(content: Text("Please enter all details")),
 //       );
 //       return;
 //     }
 
-//     setState(() => _isLoading = true);
-
-//     final url = Uri.parse("${Constants.apiBaseUrl}/signup");
-
 //     try {
+//       setState(() {
+//         isLoading = true;
+//       });
+
 //       final response = await http.post(
-//         url,
+//         Uri.parse("${Constants.apiBaseUrl}/auth/signup"),
 //         headers: {"Content-Type": "application/json"},
 //         body: jsonEncode({
-//           "fullName": fullName,
-//           "phone": phone,
+//           "name": name,
+//           "mobileNumber": number,
+//           "location": location,
 //         }),
 //       );
 
-//       if (response.statusCode == 200) {
-//         // You can also extract OTP or user ID from the response if needed
-//         Navigator.of(context).push(MaterialPageRoute(builder: (context) => Otp()));
+//       setState(() {
+//         isLoading = false;
+//       });
+
+//       if (response.statusCode == 200 || response.statusCode == 201) {
+//         Navigator.of(context).push(MaterialPageRoute(
+//             builder: (context) => Otp(phoneNumber: _numberController.text)));
 //       } else {
-//         final data = jsonDecode(response.body);
+//         final res = jsonDecode(response.body);
 //         ScaffoldMessenger.of(context).showSnackBar(
-//           SnackBar(content: Text(data['message'] ?? 'Signup failed')),
+//           SnackBar(content: Text(res['message'] ?? "Signup failed")),
 //         );
 //       }
 //     } catch (e) {
+//       setState(() {
+//         isLoading = false;
+//       });
 //       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('Error: ${e.toString()}')),
+//         SnackBar(content: Text("Something went wrong")),
 //       );
-//     } finally {
-//       setState(() => _isLoading = false);
 //     }
 //   }
 
@@ -277,7 +385,7 @@ class _SignUpState extends State<SignUp> {
 //               ),
 //               const SizedBox(height: 30),
 //               Container(
-//                 padding: EdgeInsets.all(28),
+//                 padding: const EdgeInsets.all(28),
 //                 decoration: BoxDecoration(
 //                   color: Colors.white,
 //                   borderRadius: BorderRadius.circular(12),
@@ -285,43 +393,54 @@ class _SignUpState extends State<SignUp> {
 //                 child: Column(
 //                   children: [
 //                     CustomTextfield(
+//                       controller: _nameController,
 //                       obscureText: false,
 //                       hintText: 'Enter Full name',
 //                       icon: Icons.person,
-//                       controller: _fullNameController,
 //                     ),
 //                     CustomTextfield(
+//                       controller: _numberController,
 //                       obscureText: false,
 //                       hintText: 'Enter Number',
 //                       icon: Icons.call,
-//                       controller: _phoneController,
+//                     ),
+//                     const SizedBox(height: 22),
+//                     CustomTextfield(
+//                       controller: _locationController,
+//                       obscureText: false,
+//                       hintText: 'Enter location',
+//                       icon: Icons.call,
 //                     ),
 //                     const SizedBox(height: 22),
 //                     SizedBox(
 //                       width: double.infinity,
 //                       child: ElevatedButton(
-//                         onPressed: _isLoading ? null : _signUp,
+//                         onPressed: isLoading ? null : registerUser,
 //                         style: ButtonStyle(
-//                           foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
+//                           foregroundColor:
+//                               WidgetStateProperty.all<Color>(Colors.white),
 //                           backgroundColor: WidgetStateProperty.all<Color>(
-//                               const Color.fromARGB(255, 45, 79, 6)),
-//                           shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+//                             const Color.fromARGB(255, 45, 79, 6),
+//                           ),
+//                           shape:
+//                               WidgetStateProperty.all<RoundedRectangleBorder>(
 //                             RoundedRectangleBorder(
 //                               borderRadius: BorderRadius.circular(24.0),
 //                             ),
 //                           ),
 //                         ),
 //                         child: Padding(
-//                           padding: EdgeInsets.all(14.0),
-//                           child: _isLoading
-//                               ? CircularProgressIndicator(color: Colors.white)
-//                               : Text(
+//                           padding: const EdgeInsets.all(14.0),
+//                           child: isLoading
+//                               ? const CircularProgressIndicator(
+//                                   color: Colors.white)
+//                               : const Text(
 //                                   'Send Code',
 //                                   style: TextStyle(fontSize: 16),
 //                                 ),
 //                         ),
 //                       ),
-//                     ),
+//                     )
 //                   ],
 //                 ),
 //               ),
@@ -335,246 +454,6 @@ class _SignUpState extends State<SignUp> {
 //                       type: PageTransitionType.bottomToTop,
 //                     ),
 //                   );
-//                 },
-//                 child: Center(
-//                   child: Text.rich(
-//                     TextSpan(children: [
-//                       TextSpan(
-//                         text: 'Have an Account? ',
-//                         style: TextStyle(color: Constants.blackColor),
-//                       ),
-//                       TextSpan(
-//                         text: 'Login',
-//                         style: TextStyle(color: Constants.primaryColor),
-//                       ),
-//                     ]),
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-
-
-// import 'package:flutter/material.dart';
-// import 'package:original/pages/Auth/UserLogin.dart';
-// import 'package:original/pages/Auth/Verify.dart';
-// import 'package:page_transition/page_transition.dart';
-
-// import '../../utils/config.dart';
-// import '../../widgets/CustomTextField.dart';
-// import 'LoginScreen.dart';
-
-// class SignUp extends StatelessWidget {
-//   const SignUp({Key? key}) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     // Size size = MediaQuery.of(context).size;
-
-//     return Scaffold(
-//       body: Padding(
-//         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-//         child: SingleChildScrollView(
-//           child: Column(
-//             mainAxisAlignment: MainAxisAlignment.center,
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               Image.asset('assets/images/signup.png'),
-//               const Text(
-//                 'Sign Up',
-//                 style: TextStyle(
-//                   fontSize: 35.0,
-//                   fontWeight: FontWeight.w700,
-//                 ),
-//               ),
-//               const SizedBox(
-//                 height: 30,
-//               ),
-//               //   const CustomTextfield(
-//               //   obscureText: false,
-//               //   hintText: 'Enter Number',
-//               //   icon: Icons.call,
-//               // ),
-//               // const CustomTextfield(
-//               //   obscureText: false,
-//               //   hintText: 'Enter Email',
-//               //   icon: Icons.alternate_email,
-//               // ),
-//               // const CustomTextfield(
-//               //   obscureText: false,
-//               //   hintText: 'Enter Full name',
-//               //   icon: Icons.person,
-//               // ),
-//               Container(
-//                 padding: EdgeInsets.all(28),
-//                 decoration: BoxDecoration(
-//                   color: Colors.white,
-//                   borderRadius: BorderRadius.circular(12),
-//                 ),
-//                 child: Column(
-//                   children: [
-//                     const CustomTextfield(
-//                       obscureText: false,
-//                       hintText: 'Enter Full name',
-//                       icon: Icons.person,
-//                     ),
-//                     const CustomTextfield(
-//                       obscureText: false,
-//                       hintText: 'Enter Number',
-//                       icon: Icons.call,
-//                     ),
-//                     // TextFormField(
-//                     //   keyboardType: TextInputType.number,
-//                     //   style: TextStyle(
-//                     //     fontSize: 18,
-//                     //     fontWeight: FontWeight.bold,
-//                     //   ),
-//                     //   decoration: InputDecoration(
-//                     //     enabledBorder: OutlineInputBorder(
-//                     //         borderSide: BorderSide(color: Colors.black12),
-//                     //         borderRadius: BorderRadius.circular(10)),
-//                     //     focusedBorder: OutlineInputBorder(
-//                     //         borderSide: BorderSide(color: Colors.black12),
-//                     //         borderRadius: BorderRadius.circular(10)),
-//                     //     prefix: Padding(
-//                     //       padding: EdgeInsets.symmetric(horizontal: 8),
-//                     //       child: Text(
-//                     //         '(+91)',
-//                     //         style: TextStyle(
-//                     //           fontSize: 18,
-//                     //           fontWeight: FontWeight.bold,
-//                     //         ),
-//                     //       ),
-//                     //     ),
-//                     //     suffixIcon: Icon(
-//                     //       Icons.check_circle,
-//                     //       color: Colors.green,
-//                     //       size: 32,
-//                     //     ),
-//                     //   ),
-//                     // ),
-//                     SizedBox(
-//                       height: 22,
-//                     ),
-//                     SizedBox(
-//                       width: double.infinity,
-//                       child: ElevatedButton(
-//                         onPressed: () {
-//                           Navigator.of(context).push(
-//                             MaterialPageRoute(builder: (context) => Otp()),
-//                           );
-//                         },
-//                         style: ButtonStyle(
-//                           foregroundColor:
-//                               WidgetStateProperty.all<Color>(Colors.white),
-//                           backgroundColor: WidgetStateProperty.all<Color>(
-//                               const Color.fromARGB(255, 45, 79, 6)),
-//                           shape:
-//                               WidgetStateProperty.all<RoundedRectangleBorder>(
-//                             RoundedRectangleBorder(
-//                               borderRadius: BorderRadius.circular(24.0),
-//                             ),
-//                           ),
-//                         ),
-//                         child: Padding(
-//                           padding: EdgeInsets.all(14.0),
-//                           child: Text(
-//                             'Send Code',
-//                             style: TextStyle(fontSize: 16),
-//                           ),
-//                         ),
-//                       ),
-//                     )
-//                   ],
-//                 ),
-//               ),
-//               // const CustomTextfield(
-//               //   obscureText: true,
-//               //   hintText: 'Enter Password',
-//               //   icon: Icons.lock,
-//               // ),
-
-//               // const SizedBox(
-//               //   height: 10,
-//               // ),
-//               // GestureDetector(
-//               //   onTap: () {},
-//               //   child: Container(
-//               //     height: 50,
-//               //     width: size.width,
-//               //     decoration: BoxDecoration(
-//               //       color: Constants.primaryColor,
-//               //       borderRadius: BorderRadius.circular(10),
-//               //     ),
-//               //     // padding:
-//               //     //     const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-//               //     child: const Center(
-//               //       child: Text(
-//               //         'Sign Up',
-//               //         style: TextStyle(
-//               //           color: Colors.white,
-//               //           fontSize: 18.0,
-//               //         ),
-//               //       ),
-//               //     ),
-//               //   ),
-//               // ),
-//               // const SizedBox(
-//               //   height: 20,
-//               // ),
-//               // Row(
-//               //   children: const [
-//               //     Expanded(child: Divider()),
-//               //     Padding(
-//               //       padding: EdgeInsets.symmetric(horizontal: 10),
-//               //       child: Text('OR'),
-//               //     ),
-//               //     Expanded(child: Divider()),
-//               //   ],
-//               // ),
-//               // const SizedBox(
-//               //   height: 20,
-//               // ),
-//               // Container(
-//               //   width: size.width,
-//               //   decoration: BoxDecoration(
-//               //       border: Border.all(color: Constants.primaryColor),
-//               //       borderRadius: BorderRadius.circular(10)),
-//               //   padding:
-//               //       const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-//               //   child: Row(
-//               //     mainAxisAlignment: MainAxisAlignment.spaceAround,
-//               //     children: [
-//               //       SizedBox(
-//               //         height: 20,
-//               //         child: Image.asset('assets/images/google.png'),
-//               //       ),
-//               //       Text(
-//               //         'Sign Up with Google',
-//               //         style: TextStyle(
-//               //           color: Constants.blackColor,
-//               //           fontSize: 18.0,
-//               //         ),
-//               //       ),
-//               //     ],
-//               //   ),
-//               // ),
-//               const SizedBox(
-//                 height: 20,
-//               ),
-//               GestureDetector(
-//                 onTap: () {
-//                   Navigator.pushReplacement(
-//                       context,
-//                       PageTransition(
-//                           child: const UserIn(),
-//                           type: PageTransitionType.bottomToTop));
 //                 },
 //                 child: Center(
 //                   child: Text.rich(
@@ -602,3 +481,5 @@ class _SignUpState extends State<SignUp> {
 //     );
 //   }
 // }
+
+

@@ -11,6 +11,7 @@ class Constants {
 
   // base url  Constants.apiBaseUrl
   static const String apiBaseUrl = "http://35.244.11.78:9101/api";
+  static const String imageBaseUrl = "http://35.244.11.78:9101/api/uploads/";
 
   //Onboarding texts
   static var titleOne = "Learn more about plants";

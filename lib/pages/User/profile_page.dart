@@ -1,37 +1,51 @@
-import 'package:original/pages/User/orders_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
 import 'package:original/pages/Auth/userLogout.dart';
+import 'package:original/pages/User/orders_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  String name = '';
+  String phone = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      name = prefs.getString('name') ?? 'No Name';
+      phone = prefs.getString('phone') ?? 'No Number';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: ListView(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 20, bottom: 15),
-            child: CircleAvatar(
-              radius: 62,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: const CircleAvatar(
-                radius: 60,
-                foregroundImage: NetworkImage(
-                    'https://images.unsplash.com/photo-1464863979621-258859e62245?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3386&q=80'),
-              ),
-            ),
-          ),
+          const SizedBox(height: 20),
+          // Removed image - left blank
+          const SizedBox(height: 124), // keeps spacing similar
           Center(
             child: Text(
-              "Jessi Williams",
+              name,
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
           Center(
             child: Text(
-              "jessiwills@gmail.com",
+              phone,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -41,10 +55,11 @@ class ProfilePage extends StatelessWidget {
             leading: const Icon(IconlyLight.bag),
             onTap: () {
               Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const OrdersPage(),
-                  ));
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OrdersPage(),
+                ),
+              );
             },
           ),
           ListTile(

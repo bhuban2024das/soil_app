@@ -3,7 +3,7 @@ import 'package:badges/badges.dart' as badges;
 import 'package:flutter_iconly/flutter_iconly.dart';
 import 'package:dsi_pro/dsi_pro.dart';
 import 'package:original/pages/Agent/agent_explorepage.dart';
-import 'package:original/pages/Agent/agent_order.dart';
+// import 'package:original/pages/Agent/agent_order.dart';
 import 'package:original/pages/Agent/agent_profilepage.dart';
 import 'package:original/pages/Agent/agent_test_report.dart';
 import 'package:original/pages/Agent/my_earning.dart';
@@ -29,7 +29,7 @@ class _HomePageState extends State<AgentHomepage> {
   final pages = [
     const AgentExplorepage(),
     // const AgentSearch(),
-    const AgentOrder(),
+    OrdersScreen(),
     const AgentProfilepage()
   ];
   int currentPageIndex = 0;

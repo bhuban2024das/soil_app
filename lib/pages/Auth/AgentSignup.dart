@@ -11,6 +11,9 @@ import '../../widgets/CustomTextField.dart';
 
 import 'package:original/pages/Auth/AgentLoginScreen.dart';
 
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+
 class AgentSignUp extends StatefulWidget {
   const AgentSignUp({super.key});
 
@@ -24,13 +27,66 @@ class _AgentSignUpState extends State<AgentSignUp> {
   final TextEditingController _locationController = TextEditingController();
 
   bool isLoading = false;
+  bool isGettingLocation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    getLocation();
+  }
+
+  Future<void> getLocation() async {
+    setState(() {
+      isGettingLocation = true;
+    });
+
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Location services are disabled.')),
+        );
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.deniedForever ||
+            permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Location permission denied')),
+          );
+          return;
+        }
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
+
+      String fullAddress =
+          "${placemarks[0].locality}, ${placemarks[0].administrativeArea}";
+      _locationController.text = fullAddress;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to get location')),
+      );
+    } finally {
+      setState(() {
+        isGettingLocation = false;
+      });
+    }
+  }
 
   Future<void> registerAgent() async {
     final name = _nameController.text.trim();
     final number = _numberController.text.trim();
     final location = _locationController.text.trim();
 
-    if (name.isEmpty || number.isEmpty) {
+    if (name.isEmpty || number.isEmpty || location.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Please enter all details")),
       );
@@ -43,12 +99,14 @@ class _AgentSignUpState extends State<AgentSignUp> {
       });
 
       final response = await http.post(
-        Uri.parse("${Constants.apiBaseUrl}/auth/signup"), // ✅ Agent API
+        Uri.parse("${Constants.apiBaseUrl}/auth/signup"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "name": name,
           "mobileNumber": number,
           "location": location,
+          "role": "AGENT",
+          "active": 1
         }),
       );
 
@@ -58,8 +116,8 @@ class _AgentSignUpState extends State<AgentSignUp> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) =>
-                AgentOtp(phoneNumber: _numberController.text)));
+          builder: (context) => AgentOtp(phoneNumber: number),
+        ));
       } else {
         final res = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -88,7 +146,7 @@ class _AgentSignUpState extends State<AgentSignUp> {
             children: [
               Image.asset('assets/images/signup.png'),
               const Text(
-                'Agent Sign Up', // ✅ Title change
+                'Agent Sign Up',
                 style: TextStyle(
                   fontSize: 35.0,
                   fontWeight: FontWeight.w700,
@@ -112,16 +170,20 @@ class _AgentSignUpState extends State<AgentSignUp> {
                     CustomTextfield(
                       controller: _numberController,
                       obscureText: false,
-                      hintText: 'Enter Number',
+                      hintText: 'Enter Phone Number',
                       icon: Icons.call,
                     ),
-                    const SizedBox(height: 22),
                     CustomTextfield(
                       controller: _locationController,
                       obscureText: false,
-                      hintText: 'Enter location',
-                      icon: Icons.call,
+                      hintText: 'Location (auto-filled)',
+                      icon: Icons.location_on,
                     ),
+                    if (isGettingLocation)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: LinearProgressIndicator(),
+                      ),
                     const SizedBox(height: 22),
                     SizedBox(
                       width: double.infinity,
@@ -144,7 +206,8 @@ class _AgentSignUpState extends State<AgentSignUp> {
                           padding: const EdgeInsets.all(14.0),
                           child: isLoading
                               ? const CircularProgressIndicator(
-                                  color: Colors.white)
+                                  color: Colors.white,
+                                )
                               : const Text(
                                   'Send Code',
                                   style: TextStyle(fontSize: 16),
@@ -161,8 +224,7 @@ class _AgentSignUpState extends State<AgentSignUp> {
                   Navigator.pushReplacement(
                     context,
                     PageTransition(
-                      child:
-                          const AgentIn(), // ✅ Change to your Agent Login Widget
+                      child: const AgentIn(),
                       type: PageTransitionType.bottomToTop,
                     ),
                   );
@@ -172,15 +234,11 @@ class _AgentSignUpState extends State<AgentSignUp> {
                     TextSpan(children: [
                       TextSpan(
                         text: 'Have an Agent Account? ',
-                        style: TextStyle(
-                          color: Constants.blackColor,
-                        ),
+                        style: TextStyle(color: Constants.blackColor),
                       ),
                       TextSpan(
                         text: 'Login',
-                        style: TextStyle(
-                          color: Constants.primaryColor,
-                        ),
+                        style: TextStyle(color: Constants.primaryColor),
                       ),
                     ]),
                   ),

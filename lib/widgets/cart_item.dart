@@ -1,10 +1,12 @@
 import 'dart:async';
-import 'dart:math';
 
 // import 'package:original/models/product.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:original/pages/User/Shopping/product.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
+import 'package:original/utils/config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CartItem extends StatefulWidget {
   const CartItem({
@@ -22,18 +24,19 @@ class CartItem extends StatefulWidget {
 
 class _CartItemState extends State<CartItem> {
   int itemq = 0;
+  String? token;
 
-  int _updateQuantity(int index) {
+  Future<void> _fetchUserToken() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      if (index == 0 && itemq > 0) {
-        itemq--; // Decrease quantity
-      } else if (index == 2) {
-        itemq++; // Increase quantity
-      }
+      token = prefs.getString('userToken');
     });
-    // Pass the updated itemq value to the parent or caller
-    widget.cartItem.updateQuantity(itemq);
-    return itemq;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserToken(); // Get the token when the screen loads
   }
 
   @override
@@ -101,7 +104,10 @@ class _CartItemState extends State<CartItem> {
                     borderRadius: BorderRadius.circular(10),
                     image: DecorationImage(
                       fit: BoxFit.cover,
-                      image: AssetImage(widget.cartItem.image),
+                      image: CachedNetworkImageProvider(
+                        "${Constants.imageBaseUrl}${widget.cartItem.image}",
+                        headers: {'Authorization': 'Bearer $token'},
+                      ),
                     ),
                   ),
                 ),

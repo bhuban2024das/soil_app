@@ -1,3 +1,7 @@
+import 'package:original/utils/config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+
 class Product {
   final int productId;
   final String name;
@@ -22,7 +26,8 @@ class Product {
       name: json['name'],
       description: json['description'],
       price: (json['price'] as num).toDouble(),
-      image: json['image'] ?? 'assets/images/sample.jpg', // fallback
+      image: json['imageUrl'] ?? 'assets/images/plant-six.png', // fallback
+      // image: "${Constants.imageBaseUrl}/${json['imageUrl']}",
       quantity: json['stock'],
     );
   }

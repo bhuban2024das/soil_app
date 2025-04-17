@@ -125,7 +125,7 @@ class _SoilTestRequestsState extends State<SoilTestRequests> {
           "testDate": requestDateTime, // ✅ Format: yyyy-MM-dd
           // "concerns": _concernsController.text.trim(), // ✅ Concerns
           "userId": int.parse(userId), // ✅ Convert userId
-          "agentId": 8, // ✅ Hardcoded agent
+          "agentId": prefs.getInt('agentId'),
         }),
       );
 
