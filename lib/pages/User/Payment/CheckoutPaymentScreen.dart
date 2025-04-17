@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cfcard/cfcardlistener.dart';
@@ -18,100 +19,126 @@ import 'package:flutter_cashfree_pg_sdk/api/cftheme/cftheme.dart';
 import 'package:flutter_cashfree_pg_sdk/utils/cfenums.dart';
 import 'package:flutter_cashfree_pg_sdk/utils/cfexceptions.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cfupi/cfupiutils.dart';
+import 'package:original/pages/User/Payment/PaymentSuccessScreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:original/utils/config.dart';
 
-class PaymentScreen extends StatefulWidget {
-  final String orderId;
+class PaymentPage extends StatefulWidget {
   final double amount;
 
-  const PaymentScreen({super.key, required this.orderId, required this.amount});
+  const PaymentPage({super.key, required this.amount});
 
   @override
-  State<PaymentScreen> createState() => _PaymentScreenState();
+  State<PaymentPage> createState() => _PaymentPageState();
 }
 
-class _PaymentScreenState extends State<PaymentScreen> {
-  final CFPaymentGatewayService _cfPaymentGatewayService =
-      CFPaymentGatewayService();
+class _PaymentPageState extends State<PaymentPage> {
+  final cfPaymentGatewayService = CFPaymentGatewayService();
+  bool isProcessing = true;
+  String? message;
 
   @override
   void initState() {
     super.initState();
-    _cfPaymentGatewayService.setCallback(verifyPayment, onError);
-    startPayment();
+    cfPaymentGatewayService.setCallback(_onPaymentSuccess, _onPaymentError);
+    _initiatePayment();
   }
 
-  void verifyPayment(String orderId) {
-    print("✅ Payment verification called for Order ID: $orderId");
-    // You should confirm payment on your backend here.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Payment successful!")),
-    );
-    Navigator.pop(context); // Navigate away after successful payment
-  }
-
-  void onError(CFErrorResponse errorResponse, String orderId) {
-    print("❌ Payment Error: ${errorResponse.getMessage()}");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Payment failed: ${errorResponse.getMessage()}")),
+  void _onPaymentSuccess(String orderId) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentSuccessScreen(orderId: orderId),
+      ),
     );
   }
 
-  Future<void> startPayment() async {
-    try {
-      final session = await createSession(); // From your backend
-      if (session == null) return;
+  void _onPaymentError(CFErrorResponse error, String orderId) {
+    setState(() {
+      message = "Payment failed: ${error.getMessage()}";
+      isProcessing = false;
+    });
+  }
 
-      final cfWebCheckout =
-          CFWebCheckoutPaymentBuilder().setSession(session).build();
+  Future<void> _initiatePayment() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String token = prefs.getString('userToken') ?? '';
 
-      _cfPaymentGatewayService.doPayment(cfWebCheckout);
-    } on CFException catch (e) {
-      print("Cashfree Exception: ${e.message}");
+    if (token.isEmpty) {
+      setState(() {
+        isProcessing = false;
+        message = "User not logged in.";
+      });
+      return;
     }
-  }
 
-  Future<CFSession?> createSession() async {
-    final String orderId = widget.orderId;
-    final double amount = widget.amount;
+    final Uri paymentUrl = Uri.parse("${Constants.apiBaseUrl}/payments");
 
     try {
       final response = await http.post(
-        Uri.parse("https://your-api.com/payments"), // Replace with your backend
-        headers: {"Content-Type": "application/json"},
+        paymentUrl,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
         body: jsonEncode({
-          "orderId": orderId,
-          "orderAmount": amount,
-          "orderCurrency": "INR",
-          "paymentMode": "web", // optional, or "card", "upi", etc.
+          "amount": widget.amount,
+          "paymentMode": "ONLINE",
         }),
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final sessionId = data['payment_session_id']; // from your backend
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = json.decode(response.body);
+        final String orderId = data['cashfreeOrderResponse']['order_id'];
+        final String paymentSessionId =
+            data['cashfreeOrderResponse']['payment_session_id'];
 
-        return CFSessionBuilder()
-            .setEnvironment(
-                CFEnvironment.SANDBOX) // Change to PROD in production
+        final session = CFSessionBuilder()
+            .setEnvironment(CFEnvironment.SANDBOX) // Use SANDBOX during testing
             .setOrderId(orderId)
-            .setPaymentSessionId(sessionId)
+            .setPaymentSessionId(paymentSessionId)
             .build();
+
+        final cfWebCheckout =
+            CFWebCheckoutPaymentBuilder().setSession(session).build();
+
+        cfPaymentGatewayService.doPayment(cfWebCheckout);
       } else {
-        print("❌ Failed to get session: ${response.body}");
-        return null;
+        setState(() {
+          message = "Payment failed: ${response.statusCode}";
+          isProcessing = false;
+        });
       }
     } catch (e) {
-      print("⚠️ Error creating session: $e");
-      return null;
+      setState(() {
+        message = "Payment error: $e";
+        isProcessing = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+    return Scaffold(
+      appBar: AppBar(title: const Text("Processing Payment")),
+      body: Center(
+        child: isProcessing
+            ? const CircularProgressIndicator()
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(message ?? "Unknown error"),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text("Back"),
+                  ),
+                ],
+              ),
+      ),
     );
   }
 }
