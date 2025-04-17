@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'package:original/pages/User/home_page.dart';
+// import 'package:original/pages/User/home_page.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:original/pages/User/chose agent/select_agent.dart';
 
 import '../../utils/config.dart';
 
@@ -67,12 +68,20 @@ class _OtpState extends State<Otp> {
         await prefs.setString('userMobile', widget.phoneNumber);
         await prefs.setString('userName', name);
         await prefs.setString('userId', uId);
-        await fetchAgents();
+        // await fetchAgents();
+
+        // Navigator.pushReplacement(
+        //   context,
+        //   PageTransition(
+        //       child: const HomePage(), type: PageTransitionType.bottomToTop),
+        // );
 
         Navigator.pushReplacement(
           context,
           PageTransition(
-              child: const HomePage(), type: PageTransitionType.bottomToTop),
+            child: DropdownSelectionPage(),
+            type: PageTransitionType.bottomToTop,
+          ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
