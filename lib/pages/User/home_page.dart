@@ -1,8 +1,12 @@
 import 'package:dsi_pro/dsi_pro.dart';
+import 'package:original/pages/User/Help&Support_screen.dart';
 // import 'package:original/pages/User/AddSoliTestRequest.dart';
 import 'package:original/pages/User/SoilTestRequests.dart';
+import 'package:original/pages/User/aboutUs_screen.dart';
 import 'package:original/pages/User/cart_page.dart';
 import 'package:original/pages/User/explore_page.dart';
+import 'package:original/pages/User/order_History/myorder_Screen.dart';
+import 'package:original/pages/User/user_notification.dart';
 import 'package:original/pages/settings/Profile.dart';
 import 'package:original/pages/User/services_page.dart';
 import 'package:badges/badges.dart' as badges;
@@ -65,6 +69,8 @@ class _HomePageState extends State<HomePage> {
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        
+        await prefs.setInt('userId', data["userId"]);
         setState(() {
           userName = data['name'] ?? "Unknown";
           userMobile = data['mobileNumber'] ?? "Unknown";
@@ -135,23 +141,29 @@ class _HomePageState extends State<HomePage> {
                     ListTile(
                       leading: Icon(Icons.ads_click_sharp),
                       title: Text("My Order History"),
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => MyOrdersScreen()),
+                        );
+                      },
                     ),
-                    ListTile(
-                      leading: Icon(Icons.ac_unit_sharp),
-                      title: Text("My Crop "),
-                      onTap: () {},
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.text_snippet_rounded),
-                      title: Text("Crop Agronomy "),
-                      onTap: () {},
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.trending_up_rounded),
-                      title: Text("Market Place "),
-                      onTap: () {},
-                    ),
+                    // ListTile(
+                    //   leading: Icon(Icons.ac_unit_sharp),
+                    //   title: Text("My Crop "),
+                    //   onTap: () {},
+                    // ),
+                    // ListTile(
+                    //   leading: Icon(Icons.text_snippet_rounded),
+                    //   title: Text("Crop Agronomy "),
+                    //   onTap: () {},
+                    // ),
+                    // ListTile(
+                    //   leading: Icon(Icons.trending_up_rounded),
+                    //   title: Text("Market Place "),
+                    //   onTap: () {},
+                    // ),
                     ListTile(
                       leading: Icon(Icons.receipt_long_outlined),
                       title: Text("My Reports "),
@@ -166,18 +178,38 @@ class _HomePageState extends State<HomePage> {
                     ListTile(
                       leading: Icon(Icons.settings),
                       title: Text("My Profile Settings"),
-                      onTap: () {},
+                      onTap: () {
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ProfilePage()),
+                        );
+                        
+                      },
                     ),
                     Divider(),
                     ListTile(
                       leading: Icon(Icons.info_outline),
                       title: Text("About us"),
-                      onTap: () {},
+                      onTap: () {
+                         Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => AboutUsPage()),
+                        );
+                      },
                     ),
                     ListTile(
                       leading: Icon(Icons.support_agent),
                       title: Text("Help & Support"),
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => HelpSupportScreen()),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -208,7 +240,14 @@ class _HomePageState extends State<HomePage> {
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: IconButton.filledTonal(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => NotificationScreen()),
+                        );
+
+                },
                 icon: badges.Badge(
                   badgeContent: const Text(
                     '3',

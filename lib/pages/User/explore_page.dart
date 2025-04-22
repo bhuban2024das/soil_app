@@ -3,6 +3,8 @@ import 'package:original/pages/User/AddSoliTestRequest.dart';
 import 'package:original/widgets/product_card.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ExplorePage extends StatelessWidget {
   const ExplorePage({super.key});
@@ -43,7 +45,29 @@ class ExplorePage extends StatelessWidget {
                             const Text(
                                 "Get free support from our customer service"),
                             FilledButton(
-                              onPressed: () {},
+                              onPressed: () async {
+  final prefs = await SharedPreferences.getInstance();
+  // final agentPhone = prefs.getString('agentMobile') ?? '';
+  final String mobileString = prefs.getString('agentMobile') ?? '';
+final int agentPhone = int.tryParse(mobileString) ?? 0;
+
+ if (agentPhone != 0) {
+  final Uri callUri = Uri(scheme: 'tel', path: agentPhone.toString());
+  if (await canLaunchUrl(callUri)) {
+    await launchUrl(callUri);
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Cannot launch dialer")),
+    );
+  }
+}
+ else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Agent number not found")),
+    );
+  }
+},
+
                               child: const Text("Call now"),
                             ),
                           ],
@@ -105,107 +129,107 @@ class ExplorePage extends StatelessWidget {
               ),
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Gallery",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              TextButton(
-                onPressed: () {},
-                child: const Text("See all"),
-              ),
-            ],
-          ),
-          SizedBox(
-            height: 150,
-            width: MediaQuery.of(context).size.width,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                for (var x = 0; x < products.length; x++)
-                  Container(
-                    margin: const EdgeInsets.all(5),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        products[x].image,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Trending Diseases",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              TextButton(
-                onPressed: () {},
-                child: const Text("See all"),
-              ),
-            ],
-          ),
-          SizedBox(
-            height: 100,
-            width: MediaQuery.of(context).size.width,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                for (var x = 0; x < products.length; x++)
-                  Container(
-                    width: MediaQuery.of(context).size.width - 40,
-                    margin: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.white,
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width / 3.5,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.asset(
-                              products[x].image,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 15),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                products[x].name,
-                                style: TextStyle(
-                                    fontSize: 19, fontWeight: FontWeight.bold),
-                              ),
-                              SizedBox(height: 15),
-                              Row(
-                                children: [
-                                  Icon(Icons.info_outline_rounded, size: 12),
-                                  SizedBox(width: 2),
-                                  Text("Impact")
-                                ],
-                              )
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     Text(
+          //       "Gallery",
+          //       style: Theme.of(context).textTheme.titleMedium,
+          //     ),
+          //     TextButton(
+          //       onPressed: () {},
+          //       child: const Text("See all"),
+          //     ),
+          //   ],
+          // ),
+          // SizedBox(
+          //   height: 150,
+          //   width: MediaQuery.of(context).size.width,
+          //   child: ListView(
+          //     scrollDirection: Axis.horizontal,
+          //     children: [
+          //       for (var x = 0; x < products.length; x++)
+          //         Container(
+          //           margin: const EdgeInsets.all(5),
+          //           child: ClipRRect(
+          //             borderRadius: BorderRadius.circular(8),
+          //             child: Image.asset(
+          //               products[x].image,
+          //               fit: BoxFit.cover,
+          //             ),
+          //           ),
+          //         ),
+          //     ],
+          //   ),
+          // ),
+          // SizedBox(height: 10),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     Text(
+          //       "Trending Diseases",
+          //       style: Theme.of(context).textTheme.titleMedium,
+          //     ),
+          //     TextButton(
+          //       onPressed: () {},
+          //       child: const Text("See all"),
+          //     ),
+          //   ],
+          // ),
+          // SizedBox(
+          //   height: 100,
+          //   width: MediaQuery.of(context).size.width,
+          //   child: ListView(
+          //     scrollDirection: Axis.horizontal,
+          //     children: [
+          //       for (var x = 0; x < products.length; x++)
+          //         Container(
+          //           width: MediaQuery.of(context).size.width - 40,
+          //           margin: const EdgeInsets.all(5),
+          //           decoration: BoxDecoration(
+          //             borderRadius: BorderRadius.circular(8),
+          //             color: Colors.white,
+          //           ),
+          //           child: Row(
+          //             children: [
+          //               SizedBox(
+          //                 width: MediaQuery.of(context).size.width / 3.5,
+          //                 child: ClipRRect(
+          //                   borderRadius: BorderRadius.circular(8),
+          //                   child: Image.asset(
+          //                     products[x].image,
+          //                     fit: BoxFit.cover,
+          //                   ),
+          //                 ),
+          //               ),
+          //               SizedBox(width: 15),
+          //               Expanded(
+          //                 child: Column(
+          //                   crossAxisAlignment: CrossAxisAlignment.start,
+          //                   mainAxisAlignment: MainAxisAlignment.center,
+          //                   children: [
+          //                     Text(
+          //                       products[x].name,
+          //                       style: TextStyle(
+          //                           fontSize: 19, fontWeight: FontWeight.bold),
+          //                     ),
+          //                     SizedBox(height: 15),
+          //                     Row(
+          //                       children: [
+          //                         Icon(Icons.info_outline_rounded, size: 12),
+          //                         SizedBox(width: 2),
+          //                         Text("Impact")
+          //                       ],
+          //                     )
+          //                   ],
+          //                 ),
+          //               ),
+          //             ],
+          //           ),
+          //         ),
+          //     ],
+          //   ),
+          // ),
           // SizedBox(height: 10),
           // Row(
           //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -275,33 +299,33 @@ class ExplorePage extends StatelessWidget {
           //   ),
           // ),
           SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Trending Products",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              TextButton(
-                onPressed: () {},
-                child: const Text("See all"),
-              ),
-            ],
-          ),
-          GridView.builder(
-            itemCount: products.length,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.9,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-            ),
-            itemBuilder: (context, index) {
-              return ProductCard(product: products[index]);
-            },
-          )
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     Text(
+          //       "Trending Products",
+          //       style: Theme.of(context).textTheme.titleMedium,
+          //     ),
+          //     TextButton(
+          //       onPressed: () {},
+          //       child: const Text("See all"),
+          //     ),
+          //   ],
+          // ),
+          // GridView.builder(
+          //   itemCount: products.length,
+          //   shrinkWrap: true,
+          //   physics: const NeverScrollableScrollPhysics(),
+          //   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          //     crossAxisCount: 2,
+          //     childAspectRatio: 0.9,
+          //     crossAxisSpacing: 16,
+          //     mainAxisSpacing: 16,
+          //   ),
+          //   itemBuilder: (context, index) {
+          //     return ProductCard(product: products[index]);
+          //   },
+          // )
         ],
       ),
     );

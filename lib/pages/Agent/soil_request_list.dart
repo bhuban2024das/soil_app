@@ -21,11 +21,8 @@ class SoilTestRequest {
   final int agentId; // Non-nullable field (int)
   final String agentName; // Non-nullable field (String)
   final String agentMobileNumber; // Non-nullable field (String)
-  // final String? recommendedCrops; // Nullable field (String?)
-  // final String? recommendedProducts; // Nullable field (String?)
   final List<dynamic>? recommendedCrops;
   final List<dynamic>? recommendedProducts;
-
   final String? soilPreparations; // Nullable field (String?)
 
   SoilTestRequest({
@@ -56,19 +53,6 @@ class SoilTestRequest {
       soilType: json['soilType'], // Nullable field
       status: json['status'] ?? 'Unknown', // Default value for null
       testDate: json['testDate'] ?? 'Unknown', // Default value for null
-      // phLevel: json['phLevel'] != null
-      //     ? (json['phLevel'] as num).toDouble()
-      //     : null, // Convert if not null
-      // nitrogen: json['nitrogen'] != null
-      //     ? (json['nitrogen'] as num).toDouble()
-      //     : null, // Convert if not null
-      // phosphorus: json['phosphorus'] != null
-      //     ? (json['phosphorus'] as num).toDouble()
-      //     : null, // Convert if not null
-      // potassium: json['potassium'] != null
-      //     ? (json['potassium'] as num).toDouble()
-      //     : null, // Convert if not null
-
       phLevel: json['phLevel'] != null
           ? double.tryParse(json['phLevel'].toString())
           : null,
@@ -81,15 +65,12 @@ class SoilTestRequest {
       potassium: json['potassium'] != null
           ? double.tryParse(json['potassium'].toString())
           : null,
-
       userId: json['userId'],
       userName: json['userName'] ?? 'Unknown', // Default value for null
-      userMobileNumber:
-          json['userMobileNumber'] ?? 'Unknown', // Default value for null
+      userMobileNumber: json['userMobileNumber'] ?? 'Unknown', // Default value for null
       agentId: json['agentId'],
       agentName: json['agentName'] ?? 'Unknown', // Default value for null
-      agentMobileNumber:
-          json['agentMobileNumber'] ?? 'Unknown', // Default value for null
+      agentMobileNumber: json['agentMobileNumber'] ?? 'Unknown', // Default value for null
       recommendedCrops: json['recommendedCrops'], // Nullable field
       recommendedProducts: json['recommendedProducts'], // Nullable field
       soilPreparations: json['soilPreparations'], // Nullable field
@@ -129,18 +110,15 @@ class _SoilTestRequestsScreenState extends State<SoilTestRequestsScreen> {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        print("Data: $data");
         setState(() {
           requests =
               data.map((item) => SoilTestRequest.fromJson(item)).toList();
           isLoading = false;
         });
       } else {
-        print("Failed: ${response.statusCode}");
         setState(() => isLoading = false);
       }
     } catch (e) {
-      print("Error fetching soil test requests: $e");
       setState(() => isLoading = false);
     }
   }
@@ -148,41 +126,108 @@ class _SoilTestRequestsScreenState extends State<SoilTestRequestsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Soil Test Requests")),
+      appBar: AppBar(
+        title: Text("Soil Test Requests"),
+        backgroundColor: Colors.green.shade700,
+      ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: requests.length,
-              itemBuilder: (context, index) {
-                final request = requests[index];
-                return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: ListTile(
-                    title: Text(request.userName),
-                    subtitle: Text(
-                        "${request.farmLocation}\nRequested on: ${request.testDate}"),
-                    isThreeLine: true,
-                    trailing: Icon(Icons.chevron_right),
-                    onTap: () async {
-                      final success = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SoilTestDetailScreen(
-                            request: request,
+          : requests.isEmpty
+              ? Center(
+                  child: Text(
+                    "No soil test reports available.",
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: requests.length,
+                  itemBuilder: (context, index) {
+                    final request = requests[index];
+                    return Card(
+                      margin: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 4,
+                      child: InkWell(
+                        onTap: () async {
+                          final success = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SoilTestDetailScreen(
+                                request: request,
+                              ),
+                            ),
+                          );
+                          if (success == true) {
+                            fetchSoilTestRequests();
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.person, color: Colors.green.shade700),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      request.userName,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(Icons.location_on_outlined, color: Colors.grey.shade600),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      request.farmLocation,
+                                      style: TextStyle(color: Colors.grey.shade700),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(Icons.calendar_today_outlined, color: Colors.grey.shade600, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    "Requested on: ${request.testDate}",
+                                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                                  ),
+                                  Spacer(),
+                                  Icon(Icons.chevron_right, color: Colors.grey.shade600),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(Icons.info_outline, color: Colors.orange.shade600),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    "Status: ${request.status}",
+                                    style: TextStyle(fontSize: 14, color: Colors.orange.shade600),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                      );
-
-                      if (success == true) {
-                        // Optionally refresh list
-                        fetchSoilTestRequests();
-                      }
-                      // Navigate to edit & report screen
-                    },
-                  ),
-                );
-              },
-            ),
+                      ),
+                    );
+                  },
+                ),
     );
   }
 }

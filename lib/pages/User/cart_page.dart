@@ -16,9 +16,13 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  // List<Product> cartItems = [];
+   
+  List<Product> selectedItems = [];
   List<Product> cartItems = [];
   bool isLoading = true;
+  String _selectedPaymentMethod = 'ONLINE';
+  bool isProcessing = true;
+  String? message;
 
   @override
   void initState() {
@@ -70,12 +74,58 @@ class _CartPageState extends State<CartPage> {
     });
   }
 
-  Future<String?> placeOrder(List<Product> selectedItems) async {
+  Future initiatePayment() async {
+    SharedPreferences.getInstance().then((prefs) async {
+      final String token = prefs.getString('userToken') ?? '';
+
+      if (token.isEmpty) {
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      final Uri apiUrl = Uri.parse("${Constants.apiBaseUrl}/payments");
+
+      try {
+        final http.Response response = await http.post(
+          apiUrl,
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({"amount": 100}),
+        );
+
+        // Process the response
+        if (response.statusCode == 200) {
+          return json.decode(response.body);
+        } else {
+          print("Failed to create payment. Status code: ${response.statusCode}");
+        }
+      } catch (e) {
+      setState(() {
+        message = "Payment error: $e";
+        isProcessing = false;
+      });
+    }
+    });
+  }
+
+  Future<String?> placeOrder(String paymentId, BuildContext? externalContext) async {
+     selectedItems = cartItems.where((item) => item.itemq > 0).toList();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final String token = prefs.getString('userToken') ?? '';
+    final int agentId = prefs.getInt('agentId') ?? -1;
 
+    if (agentId == -1) {
+      ScaffoldMessenger.of(externalContext ?? context).showSnackBar(
+        const SnackBar(content: Text("No agent found")),
+      );
+      return null;
+    }
     if (token.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(externalContext ?? context).showSnackBar(
         const SnackBar(content: Text("User not logged in.")),
       );
       return null;
@@ -97,7 +147,7 @@ class _CartPageState extends State<CartPage> {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({"items": items, "payment": 2, "agentId": 8}),
+        body: jsonEncode({"items": items, "paymentId": paymentId, "agentId": agentId}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -106,7 +156,6 @@ class _CartPageState extends State<CartPage> {
 
         if (orderResponse != null &&
             orderResponse['payment_session_id'] != null) {
-          final sessionId = orderResponse['payment_session_id'];
 
           // Optional: Reset item quantity after successful order
           setState(() {
@@ -115,17 +164,17 @@ class _CartPageState extends State<CartPage> {
             }
           });
 
-          return sessionId;
+          return data;
         }
       } else {
         print("Failed: ${response.body}");
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(externalContext ?? context).showSnackBar(
           SnackBar(content: Text("Order failed: ${response.statusCode}")),
         );
       }
     } catch (e) {
       print("Error: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(externalContext ?? context).showSnackBar(
         const SnackBar(content: Text("Something went wrong.")),
       );
     }
@@ -169,6 +218,24 @@ class _CartPageState extends State<CartPage> {
                       )
                     ],
                   ),
+                  // Dropdown Button for Payment Method
+                  DropdownButton<String>(
+                    value: _selectedPaymentMethod,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedPaymentMethod = newValue!;
+                      });
+                    },
+                    items: <String>['ONLINE', 'CASH']
+                        .map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 20),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -183,11 +250,9 @@ class _CartPageState extends State<CartPage> {
                           );
                           return;
                         }
-
-                        final sessionId = await placeOrder(selectedItems);
-
-                        if (sessionId != null) {
-                          Navigator.push(
+                        final response = await initiatePayment();
+                        if (_selectedPaymentMethod == 'ONLINE') {
+                        Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => PaymentPage(
@@ -195,6 +260,9 @@ class _CartPageState extends State<CartPage> {
                               ),
                             ),
                           );
+                        } else {
+                           placeOrder(
+                           )
                         }
                       },
                       label: const Text("Proceed to Checkout"),

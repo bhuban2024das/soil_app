@@ -16,6 +16,7 @@ import 'package:flutter_cashfree_pg_sdk/api/cfpaymentcomponents/cfpaymentcompone
 import 'package:flutter_cashfree_pg_sdk/api/cfpaymentgateway/cfpaymentgatewayservice.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cfsession/cfsession.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cftheme/cftheme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_cashfree_pg_sdk/utils/cfenums.dart';
 import 'package:flutter_cashfree_pg_sdk/utils/cfexceptions.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cfupi/cfupiutils.dart';
@@ -26,8 +27,11 @@ import 'package:original/utils/config.dart';
 
 class PaymentPage extends StatefulWidget {
   final double amount;
+  final int paymentId;
+  final String orderId;
+  final String sessionId;
 
-  const PaymentPage({super.key, required this.amount});
+  const PaymentPage({super.key, required this.amount, required this.paymentId, required this.orderId, required this.sessionId});
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
@@ -45,7 +49,54 @@ class _PaymentPageState extends State<PaymentPage> {
     _initiatePayment();
   }
 
+  vod _updateOrderStatus(String orderId, String status) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String token = prefs.getString('userToken') ?? '';
+
+    if (token.isEmpty) {
+      setState(() {
+        isProcessing = false;
+        message = "User not logged in.";
+      });
+      return;
+    }
+
+    final Uri updateUrl = Uri.parse("${Constants.apiBaseUrl}/orders/$orderId");
+
+    try {
+      final response = await http.put(
+        updateUrl,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({"status": status}),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _onPaymentSuccess(orderId);
+      } else {
+        setState(() {
+          message = "Failed to update order status: ${response.statusCode}";
+          isProcessing = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        message = "Error updating order status: $e";
+        isProcessing = false;
+      });
+    }
+  }
+
+    
   void _onPaymentSuccess(String orderId) {
+
+    _updateOrderStatus(orderId, "COMPLETED");
+    setState(() {
+      message = "Payment successful!";
+      isProcessing = false;
+    });
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -55,6 +106,7 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   void _onPaymentError(CFErrorResponse error, String orderId) {
+    _updateOrderStatus(orderId, "FAILED");
     setState(() {
       message = "Payment failed: ${error.getMessage()}";
       isProcessing = false;

@@ -65,6 +65,7 @@ class _DropdownSelectionPageState extends State<DropdownSelectionPage> {
 
       if (selectedAgent != null) {
         await prefs.setInt('agentId', selectedAgent["userId"]);
+        await prefs.setString('agentMobile', selectedAgent["mobileNumber"].toString());
         await prefs.setString('agentName', selectedAgent["name"]);
 
         Navigator.pushReplacement(
