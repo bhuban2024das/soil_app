@@ -3,6 +3,7 @@ import 'package:badges/badges.dart' as badges;
 import 'package:flutter_iconly/flutter_iconly.dart';
 import 'package:dsi_pro/dsi_pro.dart';
 import 'package:original/pages/Agent/agent_explorepage.dart';
+import 'package:original/pages/Agent/agent_notifiaction.dart';
 // import 'package:original/pages/Agent/agent_order.dart';
 import 'package:original/pages/Agent/agent_profilepage.dart';
 import 'package:original/pages/Agent/agent_test_report.dart';
@@ -29,7 +30,7 @@ class _HomePageState extends State<AgentHomepage> {
   final pages = [
     const AgentExplorepage(),
     // const AgentSearch(),
-    OrdersScreen(),
+    OrderListScreen(),
     const AgentProfilepage()
   ];
   int currentPageIndex = 0;
@@ -103,7 +104,11 @@ class _HomePageState extends State<AgentHomepage> {
                   accountName: Text(agentName),
                   accountEmail: Text("+91 $agentMobile"),
                   currentAccountPicture: CircleAvatar(
-                    child: Text(HelloDevsecit().getProfilePhoto("Mr. Provat")),
+                    // child: Text(HelloDevsecit().getProfilePhoto("Mr. Provat")),
+                    child: Text(
+              agentName.isNotEmpty ? agentName[0].toUpperCase() : '',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
                   ),
                 ),
               ),
@@ -171,16 +176,16 @@ class _HomePageState extends State<AgentHomepage> {
                       },
                     ),
                     Divider(),
-                    ListTile(
-                      leading: Icon(Icons.info_outline),
-                      title: Text("About us"),
-                      onTap: () {},
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.chat_outlined),
-                      title: Text("Terms and Conditions"),
-                      onTap: () {},
-                    ),
+                    // ListTile(
+                    //   leading: Icon(Icons.info_outline),
+                    //   title: Text("About us"),
+                    //   onTap: () {},
+                    // ),
+                    // ListTile(
+                    //   leading: Icon(Icons.chat_outlined),
+                    //   title: Text("Terms and Conditions"),
+                    //   onTap: () {},
+                    // ),
                   ],
                 ),
               )
@@ -210,7 +215,12 @@ class _HomePageState extends State<AgentHomepage> {
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: IconButton.filledTonal(
-                onPressed: () {},
+                onPressed: () {
+
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => const AgentNotifiaction(),
+                  ));
+                },
                 icon: badges.Badge(
                   badgeContent: const Text(
                     '7',

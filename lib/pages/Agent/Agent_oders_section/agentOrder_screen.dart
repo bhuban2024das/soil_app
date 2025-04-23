@@ -2,9 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:original/pages/Agent/Agent_oders_section/agentOrder_screen.dart'; // Assuming Order model is imported here
 import 'package:original/utils/config.dart';
-import 'package:original/pages/Agent/Agent_oders_section/agentorder_model.dart'; // Assuming Constants is imported here for your API base URL
+import 'package:original/pages/Agent/Agent_oders_section/agentorder_model.dart';
 
 class OrderListScreen extends StatefulWidget {
   const OrderListScreen({Key? key}) : super(key: key);
@@ -39,7 +38,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
       }
 
       final response = await http.get(
-        Uri.parse("${Constants.apiBaseUrl}/orders/"),
+        Uri.parse("${Constants.apiBaseUrl}/orders"),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -72,6 +71,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
       appBar: AppBar(
         title: const Text('Orders from Farmers'),
         centerTitle: true,
+        backgroundColor: Colors.green.shade700,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -82,21 +82,43 @@ class _OrderListScreenState extends State<OrderListScreen> {
                   itemBuilder: (context, index) {
                     final order = orders[index];
                     return Card(
+                      color: Colors.green.shade50,
                       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                      child: ListTile(
-                        title: Text('Order ID: ${order.orderId}'),
-                        subtitle: Column(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Farmer: ${order.farmerName}'),
-                            Text('Mobile: ${order.mobileNumber}'),
-                            Text('Total Amount: \$${order.totalAmount.toStringAsFixed(2)}'),
+                            Text(
+                              "Order ID: ${order.orderId}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Total Amount: ₹${order.totalAmount}",
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            const SizedBox(height: 8),
                             DropdownButton<String>(
                               value: order.status,
+                              dropdownColor: Colors.white,
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.w600,
+                              ),
                               items: [
-                                'Processing',
-                                'Shipped',
-                                'Delivered',
+                                'REQUESTED',
+                                'SHIPPED',
+                                'DELIVERED',
+                                'CANCELLED',
                               ].map((status) {
                                 return DropdownMenuItem<String>(
                                   value: status,
@@ -107,8 +129,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
                                 setState(() {
                                   order.status = newStatus!;
                                 });
-                                // Call API to update the order status here
-                                _updateOrderStatus(order.orderId, newStatus);
+                                _updateOrderStatus(order.orderId, newStatus!);
                               },
                             ),
                           ],
@@ -133,7 +154,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
       }
 
       final response = await http.put(
-        Uri.parse("${Constants.apiBaseUrl}/orders/$orderId"),
+        Uri.parse("${Constants.apiBaseUrl}/orders/$orderId/status"),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
