@@ -40,7 +40,7 @@ class SignIn extends StatelessWidget {
                     child: Text(
                       "For Agents",
                       style: TextStyle(
-                        fontSize: 15.0,
+                        fontSize: 20.0,
                         fontWeight: FontWeight.w300,
                       ),
                     ),

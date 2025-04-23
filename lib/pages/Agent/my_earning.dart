@@ -33,14 +33,7 @@ class ViewEarnings extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16),
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  // Logic to download/export report
-                },
-                child: Text("Download Report"),
-              ),
-            ),
+            
           ],
         ),
       ),

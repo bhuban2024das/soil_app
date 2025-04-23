@@ -3,7 +3,7 @@ class Service {
   final String image;
   final String description;
 
-  const Service({
+  Service({
     required this.name,
     required this.image,
     required this.description,

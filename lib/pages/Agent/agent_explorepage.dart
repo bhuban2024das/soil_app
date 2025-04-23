@@ -109,7 +109,7 @@ class AgentExplorepage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Bhuban Ruidas",
+                          "My Earnings",
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,

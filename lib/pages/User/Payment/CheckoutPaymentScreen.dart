@@ -69,7 +69,7 @@ class _PaymentPageState extends State<PaymentPage> {
     }
 
     final Uri updateUrl =
-        Uri.parse("${Constants.apiBaseUrl}/${widget.paymentId}/status");
+        Uri.parse("${Constants.apiBaseUrl}/payments/${widget.paymentId}/status");
 
     try {
       final response = await http.put(

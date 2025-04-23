@@ -45,7 +45,7 @@ class AgentSignIn extends StatelessWidget {
                   child: Text(
                     "For Users",
                     style: TextStyle(
-                      fontSize: 15.0,
+                      fontSize: 20.0,
                       fontWeight: FontWeight.w300,
                     ),
                   ),

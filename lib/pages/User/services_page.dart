@@ -1,18 +1,14 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:original/data/services.dart';
+import 'package:original/pages/User/service_details/service_DetailsPage.dart';
 
-import 'package:original/pages/User/Details_on_services/services.dart';
+class ServicesPage extends StatelessWidget {
+ const  ServicesPage({super.key});
 
-class ServicesPage extends StatefulWidget {
-  const ServicesPage({super.key});
 
-  @override
-  State<ServicesPage> createState() => _ServicesPageState();
-}
-
-class _ServicesPageState extends State<ServicesPage> {
-  int? expandedIndex; // Stores the currently expanded card index
-
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,75 +22,61 @@ class _ServicesPageState extends State<ServicesPage> {
           mainAxisSpacing: 14,
         ),
         itemBuilder: (context, index) {
-          final isExpanded = expandedIndex == index;
-
           return GestureDetector(
-            onTap: () {
-              setState(() {
-                expandedIndex = isExpanded ? null : index; // toggle expand
-              });
-            },
-            child: Column(
-              children: [
-                Expanded(
-                  child: Card(
-                    elevation: 5,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.asset(
-                          services[index].image,
-                          fit: BoxFit.cover,
-                        ),
-                        Align(
-                          alignment: Alignment.bottomCenter,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(5),
-                            child: BackdropFilter(
-                              filter:
-                                  ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 5, horizontal: 10),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.3),
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(5)),
-                                ),
-                                child: Text(
-                                  services[index].name,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
+           onTap: () {
+              // final String description = serviceDescriptionsList[index] ;
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => ServiceDetailPage(
+        title: services[index].name,
+        description: services[index].description,
+      ),
+    ),
+  );
+},
+            child: Card(
+              elevation: 5,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    services[index].image,
+                    fit: BoxFit.cover,
+                  ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(5),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 5, horizontal: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.3),
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(5)),
+                          ),
+                          child: Text(
+                            services[index].name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                if (isExpanded)
-                  Container(
-                    margin: const EdgeInsets.only(top: 8),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.blueGrey.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      services[index].description,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -102,7 +84,6 @@ class _ServicesPageState extends State<ServicesPage> {
     );
   }
 }
-
 
 
 // import 'dart:ui';
