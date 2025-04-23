@@ -74,20 +74,21 @@ class _CartPageState extends State<CartPage> {
     });
   }
 
-  Future initiatePayment() async {
-    SharedPreferences.getInstance().then((prefs) async {
-      final String token = prefs.getString('userToken') ?? '';
+Future<dynamic> initiatePayment() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    String token = prefs.getString('userToken') ?? '';
 
-      if (token.isEmpty) {
-        setState(() {
-          isLoading = false;
-        });
-        return;
-      }
+    if (token.isEmpty) {
+      setState(() {
+        isLoading = false;
+      });
+      return null;
+    }
+        final total =
+        cartItems.fold(0.0, (sum, item) => sum + (item.price * (item.itemq)));
+    final Uri apiUrl = Uri.parse("${Constants.apiBaseUrl}/payments");
 
-      final Uri apiUrl = Uri.parse("${Constants.apiBaseUrl}/payments");
-
-      try {
         final  response = await http.post(
           apiUrl,
           headers: {
@@ -95,36 +96,34 @@ class _CartPageState extends State<CartPage> {
             'Content-Type': 'application/json',
           },
           body: jsonEncode({
-            "amount": cartItems
-                .map((item) => item.quantity * item.price)
-                .reduce((a, b) => a + b),
+            "amount": total,
             "paymentMode": _selectedPaymentMethod
 
-            // "amount": 100,
+            // "amount": 100
             // "paymentMode": "ONLINE"
 
           }),
         );
 
-     print(response.body);
-        // Process the response
-        if (response.statusCode == 200) {
-        final  data = json.decode(response.body);
-          print(data);
-          return data;
-        } else {
-          print(
-              "Failed to create payment. Status code: ${response.statusCode}");
-        }
-      } catch (e) {
-        setState(() {
-          message = "Payment error: $e";
-          isProcessing = false;
-        });
-      }
+    print(response.body);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      print(data);
+      return data;
+    } else {
+      print("Failed to create payment. Status code: ${response.statusCode}");
+      return null;
+    }
+  } catch (e) {
+    setState(() {
+      message = "Payment error: $e";
+      isProcessing = false;
     });
+    return null;
   }
-    
+}
+
 
   Future<void> placeOrder(int paymentId, BuildContext? externalContext) async {
     selectedItems = cartItems.where((item) => item.itemq > 0).toList();
@@ -265,7 +264,7 @@ class _CartPageState extends State<CartPage> {
                         }
                          
 
-                       final response= await initiatePayment();
+                       var response= await initiatePayment();
                         if (_selectedPaymentMethod == 'ONLINE') {
                           Navigator.push(
                             context,
