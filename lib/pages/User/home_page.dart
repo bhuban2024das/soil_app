@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:original/pages/User/all_Products/all_products_page.dart';
 import 'dart:convert';
 import '../../utils/config.dart';
 // import 'package:original/pages/User/User_testReport/Soil_testListScreen.dart';
@@ -130,12 +131,12 @@ class _HomePageState extends State<HomePage> {
                     ),
                     ListTile(
                       leading: Icon(Icons.shopping_bag),
-                      title: Text("Shopping Cart"),
+                      title: Text("Products"),
                       onTap: () {
-                        setState(() {
-                          currentPageIndex = 2;
-                          goBack(context);
-                        });
+                       Navigator.push(
+  context,
+  MaterialPageRoute(builder: (context) =>  AllProductsPage()),
+);
                       },
                     ),
                     ListTile(
@@ -248,7 +249,8 @@ class _HomePageState extends State<HomePage> {
                         );
 
                 },
-                icon: badges.Badge(
+                icon: 
+                badges.Badge(
                   badgeContent: const Text(
                     '3',
                     style: TextStyle(

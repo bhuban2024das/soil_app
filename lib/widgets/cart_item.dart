@@ -23,7 +23,7 @@ class CartItem extends StatefulWidget {
 }
 
 class _CartItemState extends State<CartItem> {
-  int itemq = 0;
+  int itemq = 0; // Default starting quantity is 1
   String? token;
 
   Future<void> _fetchUserToken() async {
@@ -39,6 +39,24 @@ class _CartItemState extends State<CartItem> {
     _fetchUserToken(); // Get the token when the screen loads
   }
 
+  void _increaseQuantity() {
+    setState(() {
+      itemq++;
+    });
+    widget.cartItem.updateQuantity(itemq);
+    widget.onQuantityChanged?.call();
+  }
+
+  void _decreaseQuantity() {
+    setState(() {
+      if (itemq > 1) {
+        itemq--;
+      }
+    });
+    widget.cartItem.updateQuantity(itemq);
+    widget.onQuantityChanged?.call();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dismissible(
@@ -49,7 +67,7 @@ class _CartItemState extends State<CartItem> {
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: Colors.red,
+          color: Colors.blue,
         ),
         child: const Icon(
           IconlyLight.delete,
@@ -102,9 +120,9 @@ class _CartItemState extends State<CartItem> {
                   margin: const EdgeInsets.only(right: 15),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    image: DecorationImage(
+                    image: DecorationImage (
                       fit: BoxFit.cover,
-                      image: CachedNetworkImageProvider(
+                      image:   CachedNetworkImageProvider(
                         "${Constants.imageBaseUrl}${widget.cartItem.image}",
                         headers: {'Authorization': 'Bearer $token'},
                       ),
@@ -137,68 +155,56 @@ class _CartItemState extends State<CartItem> {
                                   color: Theme.of(context).colorScheme.primary,
                                 ),
                           ),
-                          SizedBox(
-                            width: 80,
-                            height: 35,
-                            child: TextField(
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 0),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                hintText: 'Qty',
+                          // Quantity selector with plus and minus buttons
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.grey.shade300,
+                                width: 1.0,
                               ),
-                              controller:
-                                  TextEditingController(text: itemq.toString()),
-                              onChanged: (value) {
-                                final int newQuantity =
-                                    int.tryParse(value) ?? 0;
-                                setState(() {
-                                  itemq = newQuantity;
-                                });
-                                widget.cartItem.updateQuantity(itemq);
-                                widget.onQuantityChanged?.call();
-                              },
+                            ),
+                            child: Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.remove,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                  onPressed: _decreaseQuantity,
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      left: BorderSide(
+                                          color: Colors.grey.shade300),
+                                      right: BorderSide(
+                                          color: Colors.grey.shade300),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    '$itemq',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                        ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.add,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                  onPressed: _increaseQuantity,
+                                ),
+                              ],
                             ),
                           ),
-
-                          // SizedBox(
-                          //   height: 30,
-                          //   child: ToggleButtons(
-                          //     borderRadius: BorderRadius.circular(99),
-                          //     constraints: const BoxConstraints(
-                          //       minHeight: 30,
-                          //       minWidth: 30,
-                          //     ),
-                          //     selectedColor:
-                          //         Theme.of(context).colorScheme.primary,
-                          //     isSelected: const [
-                          //       true,
-                          //       false,
-                          //       true,
-                          //     ],
-                          //     children: [
-                          //       const Icon(
-                          //         Icons.remove,
-                          //         size: 20,
-                          //       ),
-                          //       Text("${Random().nextInt(5) + 1}"),
-                          //       const Icon(
-                          //         Icons.add,
-                          //         size: 20,
-                          //       ),
-                          //     ],
-                          //     onPressed: (int index) {
-                          //       if (index == 0) {
-                          //         // decrease quantity
-                          //       } else if (index == 2) {
-                          //         // increase quantity
-                          //       }
-                          //     },
-                          //   ),
-                          // ),
                         ],
                       )
                     ],

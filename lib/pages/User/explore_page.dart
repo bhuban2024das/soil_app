@@ -1,5 +1,6 @@
 import 'package:original/data/products.dart';
 import 'package:original/pages/User/AddSoliTestRequest.dart';
+import 'package:original/pages/User/SoilTestRequests.dart';
 import 'package:original/widgets/product_card.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
@@ -88,7 +89,7 @@ final int agentPhone = int.tryParse(mobileString) ?? 0;
               Navigator.push(
                 context,
                 PageTransition(
-                  child: const AddSoilTestRequest(),
+                  child: const SoilTestRequests(),
                   type: PageTransitionType.bottomToTop,
                 ),
               );

@@ -8,6 +8,7 @@ class Product {
   final String description;
   final double price;
   final int quantity;
+  final int stock;
   final String image;
   int itemq = 0;
 
@@ -18,6 +19,7 @@ class Product {
     required this.price,
     required this.image,
     required this.quantity,
+    required this.stock,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -28,9 +30,22 @@ class Product {
       price: (json['price'] as num).toDouble(),
       image: json['imageUrl'] ?? 'assets/images/plant-six.png', // fallback
       // image: "${Constants.imageBaseUrl}/${json['imageUrl']}",
-      quantity: json['stock'],
+      stock: json['stock'] != null ? json['stock'] as int : 0, 
+      quantity: json['quantity'] != null ? json['quantity'] as int : 0,
     );
   }
+
+
+   Map<String, dynamic> toJson() {
+    return {
+      'productId': productId,
+      'name': name,
+      'description': description,
+      'price': price,
+      'imageUrl': image,
+    };
+  }
+
   void updateQuantity(int newitemq) {
     itemq = newitemq; // Update the quantity
   }

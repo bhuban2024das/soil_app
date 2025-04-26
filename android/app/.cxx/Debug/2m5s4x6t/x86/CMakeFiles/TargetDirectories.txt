@@ -1,0 +1,2 @@
+C:/Users/yogic/Desktop/bhoomi sakti modify app/soil_app/android/app/.cxx/Debug/2m5s4x6t/x86/CMakeFiles/edit_cache.dir
+C:/Users/yogic/Desktop/bhoomi sakti modify app/soil_app/android/app/.cxx/Debug/2m5s4x6t/x86/CMakeFiles/rebuild_cache.dir

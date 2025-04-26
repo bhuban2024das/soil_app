@@ -1,0 +1,12 @@
+<resources>
+    <!-- Splash screen theme shown while the app initializes -->
+    <style name="LaunchTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+
+    <!-- Default theme after Flutter is rendered -->
+    <style name="NormalTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- Customize your app theme here. -->
+        <item name="android:colorBackground">#FFFFFF</item>
+    </style>
+</resources>
