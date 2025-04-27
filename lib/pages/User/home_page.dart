@@ -240,29 +240,29 @@ class _HomePageState extends State<HomePage> {
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
-              child: IconButton.filledTonal(
-                onPressed: () {
-                  Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => NotificationScreen()),
-                        );
+              // child: IconButton.filledTonal(
+              //   onPressed: () {
+              //     Navigator.push(
+              //             context,
+              //             MaterialPageRoute(
+              //                 builder: (context) => NotificationScreen()),
+              //           );
 
-                },
-                icon: 
-                badges.Badge(
-                  badgeContent: const Text(
-                    '3',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                    ),
-                  ),
-                  position: badges.BadgePosition.topEnd(top: -15, end: -12),
-                  badgeStyle: const badges.BadgeStyle(badgeColor: Colors.green),
-                  child: const Icon(IconlyBroken.notification),
-                ),
-              ),
+              //   },
+              //   icon: 
+              //   badges.Badge(
+              //     badgeContent: const Text(
+              //       '3',
+              //       style: TextStyle(
+              //         color: Colors.white,
+              //         fontSize: 12,
+              //       ),
+              //     ),
+              //     position: badges.BadgePosition.topEnd(top: -15, end: -12),
+              //     badgeStyle: const badges.BadgeStyle(badgeColor: Colors.green),
+              //     child: const Icon(IconlyBroken.notification),
+              //   ),
+              // ),
             ),
           ],
         ),
