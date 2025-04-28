@@ -5,7 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
 import 'package:original/pages/Auth/userLogout.dart';
 import '../../utils/config.dart';
-import 'package:original/pages/settings/edit_profile.dart'; // Import EditProfilePage
+import 'edit_profile.dart'; // Import EditProfilePage
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -36,6 +36,7 @@ class _ProfilePageState extends State<ProfilePage> {
         name = "Unknown";
         phone = "Not found";
         location = "Unknown";
+        profilePicUrl = "";
       });
       return;
     }
@@ -61,6 +62,7 @@ class _ProfilePageState extends State<ProfilePage> {
           name = "Failed to load";
           phone = "Try again";
           location = "Unknown";
+          profilePicUrl = "";
         });
       }
     } catch (e) {
@@ -69,6 +71,7 @@ class _ProfilePageState extends State<ProfilePage> {
         name = "Error";
         phone = "Check connection";
         location = "Unknown";
+        profilePicUrl = "";
       });
     }
   }
@@ -100,17 +103,14 @@ class _ProfilePageState extends State<ProfilePage> {
                   IconButton(
                     icon: Icon(Icons.edit, color: Constants.primaryColor),
                     onPressed: () async {
-              // Open EditProfilePage and wait for result
-              final updated = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const EditProfilePage()),
-              );
-
-              // If updated == true, reload profile data
-              if (updated == true) {
-                fetchUserData();
-              }
-                    }
+                      final updated = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const EditProfilePage()),
+                      );
+                      if (updated == true) {
+                        fetchUserData();
+                      }
+                    },
                   ),
                 ],
               ),
@@ -126,20 +126,21 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
                 child: profilePicUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: "${Constants.imageBaseUrl}$profilePicUrl",
-                        httpHeaders: {
-                          'Authorization': 'Bearer $token',
-                        },
-                        fit: BoxFit.cover,
-                        fadeInDuration: const Duration(milliseconds: 500),
-                        placeholder: (context, url) => Container(
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.person, size: 60, color: Colors.white),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: Colors.grey,
-                          child: const Icon(Icons.person, size: 60, color: Colors.white),
+                    ? ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl: "${Constants.imageBaseUrl}$profilePicUrl",
+                          httpHeaders: {
+                            'Authorization': 'Bearer $token',
+                          },
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.person, size: 60, color: Colors.white),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey,
+                            child: const Icon(Icons.person, size: 60, color: Colors.white),
+                          ),
                         ),
                       )
                     : Container(

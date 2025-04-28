@@ -93,7 +93,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           SnackBar(content: Text('Updated profile Successfully')),
         );
         Navigator.pop(context, true); 
-        // Success, go back
+        loadUserData();// Success, go back
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update profile')),
