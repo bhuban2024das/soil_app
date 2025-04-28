@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
 import 'package:original/pages/Auth/userLogout.dart';
 import '../../utils/config.dart';
+import 'package:original/pages/settings/edit_profile.dart'; // Import EditProfilePage
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -15,6 +17,9 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   String name = '';
   String phone = '';
+  String location = '';
+  String profilePicUrl = '';
+  String token = '';
 
   @override
   void initState() {
@@ -24,12 +29,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> fetchUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('userToken') ?? "";
+    token = prefs.getString('userToken') ?? "";
 
     if (token.isEmpty) {
       setState(() {
         name = "Unknown";
         phone = "Not found";
+        location = "Unknown";
       });
       return;
     }
@@ -47,11 +53,14 @@ class _ProfilePageState extends State<ProfilePage> {
         setState(() {
           name = data['name'] ?? "Unknown";
           phone = data['mobileNumber'] ?? "Unknown";
+          location = data['location'] ?? "Unknown";
+          profilePicUrl = data['profilePictureUrl'] ?? "";
         });
       } else {
         setState(() {
           name = "Failed to load";
           phone = "Try again";
+          location = "Unknown";
         });
       }
     } catch (e) {
@@ -59,6 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         name = "Error";
         phone = "Check connection";
+        location = "Unknown";
       });
     }
   }
@@ -76,17 +86,35 @@ class _ProfilePageState extends State<ProfilePage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 50),
-              Text(
-                "My Profile",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Constants.primaryColor,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "My Profile",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Constants.primaryColor,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.edit, color: Constants.primaryColor),
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const EditProfilePage()),
+                      );
+                      if (result == true) {
+                        fetchUserData(); // Refresh after editing
+                      }
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 30),
               Container(
                 width: 150,
+                height: 150,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -94,13 +122,31 @@ class _ProfilePageState extends State<ProfilePage> {
                     width: 5.0,
                   ),
                 ),
-                child: const CircleAvatar(
-                  radius: 60,
-                  backgroundColor: Colors.grey,
-                  child: Icon(Icons.person, size: 60, color: Colors.white),
+                child: ClipOval(
+                  child: profilePicUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: "${Constants.imageBaseUrl}$profilePicUrl",
+                          httpHeaders: {
+                            'Authorization': 'Bearer $token',
+                          },
+                          fit: BoxFit.cover,
+                          fadeInDuration: const Duration(milliseconds: 500),
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.person, size: 60, color: Colors.white),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey,
+                            child: const Icon(Icons.person, size: 60, color: Colors.white),
+                          ),
+                        )
+                      : Container(
+                          color: Colors.grey,
+                          child: const Icon(Icons.person, size: 60, color: Colors.white),
+                        ),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               Text(
                 name,
                 style: TextStyle(
@@ -108,13 +154,23 @@ class _ProfilePageState extends State<ProfilePage> {
                   fontSize: 20,
                 ),
               ),
+              const SizedBox(height: 5),
               Text(
                 phone,
                 style: TextStyle(
-                  color: Constants.blackColor.withOpacity(.3),
+                  color: Constants.blackColor.withOpacity(.6),
+                  fontSize: 16,
                 ),
               ),
-              const SizedBox(height: 300,),
+              const SizedBox(height: 5),
+              Text(
+                location,
+                style: TextStyle(
+                  color: Constants.blackColor.withOpacity(.6),
+                  fontSize: 16,
+                ),
+              ),
+              const Spacer(),
               GestureDetector(
                 onTap: () {
                   UserLogout.logout(context);
@@ -143,172 +199,3 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 }
-
-
-// import 'dart:convert';
-// import 'package:flutter/material.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:http/http.dart' as http;
-// import 'package:original/pages/Auth/userLogout.dart';
-// import '../../utils/config.dart';
-// import '../../widgets/ProfileWidget.dart';
-
-// class ProfilePage extends StatefulWidget {
-//   const ProfilePage({super.key});
-
-//   @override
-//   State<ProfilePage> createState() => _ProfilePageState();
-// }
-
-// class _ProfilePageState extends State<ProfilePage> {
-//   String name = '';
-//   String phone = '';
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     fetchUserData();
-//   }
-
-//   Future<void> fetchUserData() async {
-//     SharedPreferences prefs = await SharedPreferences.getInstance();
-//     final token = prefs.getString('userToken') ?? "";
-
-//     if (token.isEmpty) {
-//       setState(() {
-//         name = "Unknown";
-//         phone = "Not found";
-//       });
-//       return;
-//     }
-
-//     try {
-//       final response = await http.get(
-//         Uri.parse("${Constants.apiBaseUrl}/user/me"),
-//         headers: {
-//           'Authorization': 'Bearer $token',
-//         },
-//       );
-
-//       if (response.statusCode == 200) {
-//         final data = jsonDecode(response.body);
-//         setState(() {
-//           name = data['name'] ?? "Unknown";
-//           phone = data['mobileNumber'] ?? "Unknown";
-//         });
-//       } else {
-//         setState(() {
-//           name = "Failed to load";
-//           phone = "Try again";
-//         });
-//       }
-//     } catch (e) {
-//       print("Error fetching user: $e");
-//       setState(() {
-//         name = "Error";
-//         phone = "Check connection";
-//       });
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     Size size = MediaQuery.of(context).size;
-//     return Scaffold(
-//       body: SingleChildScrollView(
-//         child: Container(
-//           padding: const EdgeInsets.all(16),
-//           height: size.height,
-//           width: size.width,
-//           child: Column(
-//             crossAxisAlignment: CrossAxisAlignment.center,
-//             children: [
-//               // Empty circle avatar without image
-//               Container(
-//                 width: 150,
-//                 decoration: BoxDecoration(
-//                   shape: BoxShape.circle,
-//                   border: Border.all(
-//                     color: Constants.primaryColor.withOpacity(.5),
-//                     width: 5.0,
-//                   ),
-//                 ),
-//                 child: const CircleAvatar(
-//                   radius: 60,
-//                   backgroundColor: Colors.grey, // Empty avatar
-//                   child: Icon(Icons.person, size: 60, color: Colors.white),
-//                 ),
-//               ),
-//               const SizedBox(height: 10),
-//               SizedBox(
-//                 width: size.width * .5,
-//                 child: Row(
-//                   mainAxisAlignment: MainAxisAlignment.center,
-//                   children: [
-//                     Text(
-//                       name,
-//                       style: TextStyle(
-//                         color: Constants.blackColor,
-//                         fontSize: 20,
-//                       ),
-//                     ),
-//                     const SizedBox(width: 6),
-//                     SizedBox(
-//                       height: 24,
-//                       child: Image.asset("assets/images/verified.png"),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//               Text(
-//                 phone,
-//                 style: TextStyle(
-//                   color: Constants.blackColor.withOpacity(.3),
-//                 ),
-//               ),
-//               const SizedBox(height: 30),
-//               SizedBox(
-//                 height: size.height * .7,
-//                 width: size.width,
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.center,
-//                   children: [
-//                     const ProfileWidget(
-//                       icon: Icons.person,
-//                       title: 'My Profile',
-//                     ),
-//                     const ProfileWidget(
-//                       icon: Icons.settings,
-//                       title: 'Settings',
-//                     ),
-//                     const ProfileWidget(
-//                       icon: Icons.notifications,
-//                       title: 'Notifications',
-//                     ),
-//                     const ProfileWidget(
-//                       icon: Icons.chat,
-//                       title: 'FAQs',
-//                     ),
-//                     const ProfileWidget(
-//                       icon: Icons.share,
-//                       title: 'Share',
-//                     ),
-//                     GestureDetector(
-//                       onTap: () {
-//                         UserLogout.logout(context);
-//                       },
-//                       child: const ProfileWidget(
-//                         icon: Icons.logout,
-//                         title: 'Log Out',
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
