@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:original/pages/User/Shopping/product.dart';
 import 'package:original/pages/User/cart_page.dart';
+import 'package:original/pages/User/home_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:original/utils/config.dart';
 
@@ -78,12 +79,14 @@ class _AllProductsPageState extends State<AllProductsPage> {
       selectedItems.map((product) => json.encode(product.toJson())).toList();
   await prefs.setStringList('userCart', cartJsonList);
 
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(
-      builder: (context) => CartPage(),
-    ),
-  );
+  // Navigator.pushReplacement(
+  //   context,
+  //   MaterialPageRoute(
+  //     builder: (context) => CartPage(),
+  //   ),
+  // );
+  Navigator.pop(context); // Close the current page
+  homePageKey.currentState?.currentPageIndex=2; // Navigate to CartPage using the key
 }
 
 

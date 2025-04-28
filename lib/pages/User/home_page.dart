@@ -20,11 +20,15 @@ import '../../utils/config.dart';
 // import 'package:original/pages/User/User_testReport/Soil_testListScreen.dart';
 import 'package:original/pages/User/user_report/soliTestReportsList_screen.dart';
 
+final GlobalKey<_HomePageState> homePageKey = GlobalKey<_HomePageState>();
+
+
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  HomePage({Key? key}) : super(key: homePageKey);
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  // State<HomePage> createState() => _HomePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
@@ -45,6 +49,12 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     fetchUserData();
   }
+
+  // void _onItemTapped(int index) {
+  //   setState(() {
+  //     currentPageIndex = index;
+  //   });
+  // }
 
   Future<void> fetchUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -90,6 +100,8 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
+  
+  
 
   @override
   Widget build(BuildContext context) {
