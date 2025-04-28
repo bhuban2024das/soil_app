@@ -89,8 +89,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
       var res = await request.send();
 
       if (res.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Updated profile Successfully')),
+        );
         Navigator.pop(context, true); 
-        loadUserData();// Success, go back
+        // Success, go back
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update profile')),

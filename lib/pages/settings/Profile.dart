@@ -100,14 +100,17 @@ class _ProfilePageState extends State<ProfilePage> {
                   IconButton(
                     icon: Icon(Icons.edit, color: Constants.primaryColor),
                     onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const EditProfilePage()),
-                      );
-                      if (result == true) {
-                        fetchUserData(); // Refresh after editing
-                      }
-                    },
+              // Open EditProfilePage and wait for result
+              final updated = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EditProfilePage()),
+              );
+
+              // If updated == true, reload profile data
+              if (updated == true) {
+                fetchUserData();
+              }
+                    }
                   ),
                 ],
               ),
@@ -122,29 +125,27 @@ class _ProfilePageState extends State<ProfilePage> {
                     width: 5.0,
                   ),
                 ),
-                child: ClipOval(
-                  child: profilePicUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: "${Constants.imageBaseUrl}$profilePicUrl",
-                          httpHeaders: {
-                            'Authorization': 'Bearer $token',
-                          },
-                          fit: BoxFit.cover,
-                          fadeInDuration: const Duration(milliseconds: 500),
-                          placeholder: (context, url) => Container(
-                            color: Colors.grey[300],
-                            child: const Icon(Icons.person, size: 60, color: Colors.white),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: Colors.grey,
-                            child: const Icon(Icons.person, size: 60, color: Colors.white),
-                          ),
-                        )
-                      : Container(
+                child: profilePicUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: "${Constants.imageBaseUrl}$profilePicUrl",
+                        httpHeaders: {
+                          'Authorization': 'Bearer $token',
+                        },
+                        fit: BoxFit.cover,
+                        fadeInDuration: const Duration(milliseconds: 500),
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.person, size: 60, color: Colors.white),
+                        ),
+                        errorWidget: (context, url, error) => Container(
                           color: Colors.grey,
                           child: const Icon(Icons.person, size: 60, color: Colors.white),
                         ),
-                ),
+                      )
+                    : Container(
+                        color: Colors.grey,
+                        child: const Icon(Icons.person, size: 60, color: Colors.white),
+                      ),
               ),
               const SizedBox(height: 20),
               Text(
