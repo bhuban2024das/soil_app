@@ -79,14 +79,14 @@ class _AllProductsPageState extends State<AllProductsPage> {
       selectedItems.map((product) => json.encode(product.toJson())).toList();
   await prefs.setStringList('userCart', cartJsonList);
 
-  // Navigator.pushReplacement(
-  //   context,
-  //   MaterialPageRoute(
-  //     builder: (context) => CartPage(),
-  //   ),
-  // );
-  Navigator.pop(context); // Close the current page
-  homePageKey.currentState?.currentPageIndex=2; // Navigate to CartPage using the key
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (context) => CartPage(),
+    ),
+  );
+  // Navigator.pop(context); // Close the current page
+  // homePageKey.currentState?.currentPageIndex=2; // Navigate to CartPage using the key
 }
 
 

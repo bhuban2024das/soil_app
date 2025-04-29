@@ -10,10 +10,8 @@ class Agentlogout {
   static Future<void> logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Clear user-related data
-    await prefs.remove('accessToken');
-    await prefs.remove('userMobile');
-    await prefs.remove('userId');
+  
+    await prefs.clear();
 
     // Navigate to the Login Screen and remove all previous routes
     Navigator.pushAndRemoveUntil(

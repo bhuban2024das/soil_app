@@ -16,6 +16,8 @@ class AgentProfilepage extends StatefulWidget {
 class _AgentProfilepageState extends State<AgentProfilepage> {
   String agentName = "";
   String agentMobile = "";
+  String? pfp;
+  String? token;
 
   @override
   void initState() {
@@ -48,6 +50,11 @@ class _AgentProfilepageState extends State<AgentProfilepage> {
         setState(() {
           agentName = data['name'] ?? "Unknown";
           agentMobile = data['mobileNumber'] ?? "Unknown";
+          pfp = data['profilePictureUrl'] ?? "";
+
+          prefs.setString('agentName', agentName);
+          prefs.setString('agentMobile', agentMobile);
+          prefs.setString('profilePictureUrl', pfp ?? "");
         });
       } else {
         setState(() {

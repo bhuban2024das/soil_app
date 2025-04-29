@@ -82,7 +82,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       if (imageFile != null) {
         request.files.add(
-          await http.MultipartFile.fromPath('profilePictureUrl', imageFile!.path),
+          await http.MultipartFile.fromPath('profilePicture', imageFile!.path),
         );
       }
 
@@ -93,7 +93,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           SnackBar(content: Text('Updated profile Successfully')),
         );
         Navigator.pop(context, true); 
-        loadUserData();// Success, go back
+       // Success, go back
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update profile')),

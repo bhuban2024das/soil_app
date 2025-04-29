@@ -18,6 +18,7 @@ import 'package:original/utils/config.dart';
 import 'package:original/pages/Agent/soil_request_list.dart';
 import 'package:original/pages/Agent/Product&Inventory/productList_screen.dart';
 import 'package:original/pages/Agent/Agent_oders_section/agentOrder_screen.dart';
+import 'package:original/pages/settings/Profile.dart';
 
 class AgentHomepage extends StatefulWidget {
   const AgentHomepage({super.key});
@@ -100,15 +101,17 @@ class _HomePageState extends State<AgentHomepage> {
             children: [
               SizedBox(
                 height: 200,
-                child: UserAccountsDrawerHeader(
-                  accountName: Text(agentName),
-                  accountEmail: Text("+91 $agentMobile"),
-                  currentAccountPicture: CircleAvatar(
-                    // child: Text(HelloDevsecit().getProfilePhoto("Mr. Provat")),
-                    child: Text(
-              agentName.isNotEmpty ? agentName[0].toUpperCase() : '',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+                child: SingleChildScrollView(
+                  child: UserAccountsDrawerHeader(
+                    accountName: Text(agentName),
+                    accountEmail: Text("+91 $agentMobile"),
+                    currentAccountPicture: CircleAvatar(
+                      // child: Text(HelloDevsecit().getProfilePhoto("Mr. Provat")),
+                      child: Text(
+                                agentName.isNotEmpty ? agentName[0].toUpperCase() : '',
+                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                              ),
+                    ),
                   ),
                 ),
               ),

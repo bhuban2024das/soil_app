@@ -43,6 +43,7 @@ class _HomePageState extends State<HomePage> {
 
   String userName = "Loading...";
   String userMobile = "Fetching...";
+  String? pfp;
 
   @override
   void initState() {
@@ -56,12 +57,13 @@ class _HomePageState extends State<HomePage> {
   //   });
   // }
 
+  String? token;
+
   Future<void> fetchUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final mobile = prefs.getString('userMobile') ?? "";
-    final token = prefs.getString('userToken') ?? "";
-
-    if (mobile.isEmpty || token.isEmpty) {
+    token = prefs.getString('userToken') ?? "";
+    if (mobile.isEmpty || token!.isEmpty) {
       setState(() {
         userName = "Unknown";
         userMobile = "Not found";
@@ -82,6 +84,12 @@ class _HomePageState extends State<HomePage> {
         final data = jsonDecode(response.body);
         
         await prefs.setInt('userId', data["userId"]);
+        await prefs.setString('userName', data["name"]);
+        await prefs.setString('userMobile', data["mobileNumber"]);
+        await prefs.setString('userProfilePic', data["profilePictureUrl"]);
+        await prefs.setString('userLocation', data["location"]);
+
+        pfp = data["profilePictureUrl"];
         setState(() {
           userName = data['name'] ?? "Unknown";
           userMobile = data['mobileNumber'] ?? "Unknown";
@@ -110,124 +118,147 @@ class _HomePageState extends State<HomePage> {
       child: Scaffold(
         key: _scaffoldKey,
         drawer: Drawer(
-          child: Column(
-            children: [
-              SizedBox(
-                height: 200,
-                child: UserAccountsDrawerHeader(
-                  accountName: Text(userName),
-                  accountEmail: Text("+91 $userMobile"),
-                  currentAccountPicture: CircleAvatar(
-                    child: Text(HelloDevsecit().getProfilePhoto(userName)),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                SizedBox(
+                  child: UserAccountsDrawerHeader(
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      image: DecorationImage(
+                        image: NetworkImage(
+                              "https://www.shutterstock.com/image-photo/lush-rice-paddy-field-neat-600nw-2499404003.jpg",
+                        ),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    accountName: Text(userName),
+                    accountEmail: Text("+91 $userMobile"),
+                    currentAccountPicture: CircleAvatar(
+                      child: pfp != null ? Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          image: DecorationImage(
+                            image: NetworkImage('${Constants.imageBaseUrl}${pfp!}', headers: {
+                              "Authorization": "Bearer $token",
+                            }),
+                            
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ) : Text(HelloDevsecit().getProfilePhoto(userName)),
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                height: DSIheightWidth(context, 100, true) - 200,
-                child: ListView(
-                  padding: EdgeInsets.all(0),
-                  children: [
-                    ListTile(
-                      leading: Icon(Icons.home_outlined),
-                      title: Text("Home"),
-                      onTap: () {
-                        go(context, HomePage());
-                      },
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.radar_sharp),
-                      title: Text("Test Requests"),
-                      onTap: () {
-                        go(context, SoilTestRequests());
-                      },
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.shopping_bag),
-                      title: Text("Products"),
-                      onTap: () {
-                       Navigator.push(
-  context,
-  MaterialPageRoute(builder: (context) =>  AllProductsPage()),
-);
-                      },
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.ads_click_sharp),
-                      title: Text("My Order History"),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => MyOrdersScreen()),
-                        );
-                      },
-                    ),
-                    // ListTile(
-                    //   leading: Icon(Icons.ac_unit_sharp),
-                    //   title: Text("My Crop "),
-                    //   onTap: () {},
-                    // ),
-                    // ListTile(
-                    //   leading: Icon(Icons.text_snippet_rounded),
-                    //   title: Text("Crop Agronomy "),
-                    //   onTap: () {},
-                    // ),
-                    // ListTile(
-                    //   leading: Icon(Icons.trending_up_rounded),
-                    //   title: Text("Market Place "),
-                    //   onTap: () {},
-                    // ),
-                    ListTile(
-                      leading: Icon(Icons.receipt_long_outlined),
-                      title: Text("My Reports "),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => UserReportsScreen()),
-                        );
-                      },
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.settings),
-                      title: Text("My Profile Settings"),
-                      onTap: () {
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => ProfilePage()),
-                        );
-                        
-                      },
-                    ),
-                    Divider(),
-                    ListTile(
-                      leading: Icon(Icons.info_outline),
-                      title: Text("About us"),
-                      onTap: () {
+                SizedBox(
+                  height: DSIheightWidth(context, 100, true) - 200,
+                  child: ListView(
+                    padding: EdgeInsets.all(0),
+                    children: [
+                      ListTile(
+                        leading: Icon(Icons.home_outlined),
+                        title: Text("Home"),
+                        onTap: () {
+                          go(context, HomePage());
+                        },
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.radar_sharp),
+                        title: Text("Test Requests"),
+                        onTap: () {
+                          go(context, SoilTestRequests());
+                        },
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.shopping_bag),
+                        title: Text("Products"),
+                        onTap: () {
                          Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => AboutUsPage()),
-                        );
-                      },
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.support_agent),
-                      title: Text("Help & Support"),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => HelpSupportScreen()),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              )
-            ],
+              context,
+              MaterialPageRoute(builder: (context) =>  AllProductsPage()),
+            );
+                        },
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.ads_click_sharp),
+                        title: Text("My Order History"),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => MyOrdersScreen()),
+                          );
+                        },
+                      ),
+                      // ListTile(
+                      //   leading: Icon(Icons.ac_unit_sharp),
+                      //   title: Text("My Crop "),
+                      //   onTap: () {},
+                      // ),
+                      // ListTile(
+                      //   leading: Icon(Icons.text_snippet_rounded),
+                      //   title: Text("Crop Agronomy "),
+                      //   onTap: () {},
+                      // ),
+                      // ListTile(
+                      //   leading: Icon(Icons.trending_up_rounded),
+                      //   title: Text("Market Place "),
+                      //   onTap: () {},
+                      // ),
+                      ListTile(
+                        leading: Icon(Icons.receipt_long_outlined),
+                        title: Text("My Reports "),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => UserReportsScreen()),
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.settings),
+                        title: Text("My Profile Settings"),
+                        onTap: () {
+            
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ProfilePage()),
+                          );
+                          
+                        },
+                      ),
+                      Divider(),
+                      ListTile(
+                        leading: Icon(Icons.info_outline),
+                        title: Text("About us"),
+                        onTap: () {
+                           Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => AboutUsPage()),
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.support_agent),
+                        title: Text("Help & Support"),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => HelpSupportScreen()),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                )
+              ],
+            ),
           ),
         ),
         appBar: AppBar(
